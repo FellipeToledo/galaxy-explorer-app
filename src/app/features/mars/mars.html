@@ -64,20 +64,22 @@
       @for (img of images(); track img.nasaId; let i = $index) {
         <button class="card" appInView [attr.data-theme]="i % 4" (click)="openLightbox(img)">
           <span class="card-body">
-            <span class="card-img">
-              <span class="card-img-glow"></span>
-              <img class="card-photo" [src]="img.thumbUrl" [alt]="img.title" loading="lazy" />
-              <span class="card-badge">{{ img.center || 'NASA' }}</span>
-            </span>
-            <span class="card-info">
-              <span class="card-brand">Marte</span>
-              <span class="card-name">{{ img.title }}</span>
-              <span class="card-desc">{{ img.description || 'Imagem do acervo da NASA.' }}</span>
-              <span class="card-meta">
-                <span class="card-date">
-                  {{ img.dateCreated ? (img.dateCreated | date: 'mediumDate') : '' }}
+            <span class="card-inner">
+              <span class="card-img">
+                <span class="card-img-glow"></span>
+                <img class="card-photo" [src]="img.thumbUrl" [alt]="img.title" loading="lazy" />
+                <span class="card-badge">{{ img.center || 'NASA' }}</span>
+              </span>
+              <span class="card-info">
+                <span class="card-brand">Marte</span>
+                <span class="card-name">{{ img.title }}</span>
+                <span class="card-desc">{{ img.description || 'Imagem do acervo da NASA.' }}</span>
+                <span class="card-meta">
+                  <span class="card-date">
+                    {{ img.dateCreated ? (img.dateCreated | date: 'mediumDate') : '' }}
+                  </span>
+                  <span class="card-cta">Ver imagem →</span>
                 </span>
-                <span class="card-cta">Ver imagem →</span>
               </span>
             </span>
           </span>
