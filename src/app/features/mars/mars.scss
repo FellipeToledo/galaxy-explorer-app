@@ -188,27 +188,45 @@
   transform: translateY(-10px) scale(1.02);
 }
 
-/* Glow externo desfocado — só no hover */
+/* Glow externo: um ARCO desfocado (com cauda transparente) que gira junto
+   com a borda, dando a impressão de algo dando a volta — não um halo fixo. */
 .card::after {
   content: '';
   position: absolute;
-  inset: -6px;
   z-index: -1;
-  border-radius: 28px;
-  background: conic-gradient(var(--c1), var(--c2), var(--c3), var(--c1));
-  filter: blur(16px);
+  top: 50%;
+  left: 50%;
+  width: 122%;
+  height: 122%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0%,
+    var(--c1) 15%,
+    var(--c2) 34%,
+    var(--c3) 50%,
+    transparent 62%
+  );
+  filter: blur(15px);
   opacity: 0;
+  transform: translate(-50%, -50%) rotate(0deg);
   transition: opacity 0.35s ease;
 }
 
-.card:hover::after {
-  opacity: 0.55;
+.card.in-view::after {
+  opacity: 0.35;
+  animation: cardSpin 4s linear infinite;
 }
 
-/* ── Borda em gradiente cônico girando ──
-   Um gradiente sobredimensionado gira via transform (composição de GPU,
-   sem repaint, sem depender de @property) e é recortado pelo card-body,
-   revelando só o anel de 2px = a borda. Gira quando o card está visível. */
+.card:hover::after {
+  opacity: 0.75;
+  animation-duration: 2.2s;
+}
+
+/* ── Borda em ARCO cônico girando (efeito cometa) ──
+   Um gradiente sobredimensionado gira via transform (GPU, sem repaint) e é
+   recortado pelo card-body, revelando só o anel = a borda. O gradiente é um
+   arco (cabeça branca brilhante) com CAUDA TRANSPARENTE, então parece uma luz
+   dando a volta, não uma borda colorida em todo o entorno. */
 .card-body {
   position: relative;
   z-index: 0;
@@ -217,14 +235,7 @@
   padding: 3px; /* espessura da borda */
   border-radius: 22px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.08);
-  /* halo neon sutil em repouso (box-shadow é barato; sem blur filter) */
-  box-shadow: 0 0 18px -5px var(--c1), 0 0 10px -6px var(--c2);
-  transition: box-shadow 0.3s ease;
-}
-
-.card:hover .card-body {
-  box-shadow: 0 0 34px -4px var(--c1), 0 0 22px -6px var(--c2);
+  background: transparent;
 }
 
 .card-body::before {
@@ -236,14 +247,15 @@
   width: 200%;
   height: 200%;
   background: conic-gradient(
-    var(--c1),
-    var(--c2),
-    #ffffff,
-    var(--c3),
-    var(--c1)
+    from 0deg,
+    transparent 0%,
+    var(--c1) 15%,
+    var(--c2) 30%,
+    #ffffff 42%,
+    var(--c3) 52%,
+    transparent 66%
   );
   transform: translate(-50%, -50%) rotate(0deg);
-  opacity: 1;
 }
 
 .card.in-view .card-body::before {
@@ -252,7 +264,6 @@
 
 .card:hover .card-body::before {
   animation-duration: 2.2s;
-  opacity: 1;
 }
 
 @keyframes cardSpin {
