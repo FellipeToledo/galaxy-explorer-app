@@ -30,6 +30,19 @@
     </form>
   </div>
 
+  <!-- Categorias (refinam a busca do rover) -->
+  <div class="categories">
+    @for (c of categories; track c.id) {
+      <button
+        class="cat"
+        [class.active]="category() === c.id && rover()"
+        (click)="selectCategory(c.id)"
+      >
+        <span class="cat-icon">{{ c.icon }}</span> {{ c.label }}
+      </button>
+    }
+  </div>
+
   @if (loading()) {
     <div class="state glass">
       <div class="spinner"></div>
@@ -43,15 +56,24 @@
   } @else if (images().length === 0) {
     <div class="state glass">
       <p>🛰️ Nenhuma imagem encontrada.</p>
-      <p class="hint">Tente outro rover ou outro termo de busca.</p>
+      <p class="hint">Tente outro rover, outra categoria ou outro termo de busca.</p>
     </div>
   } @else {
     <p class="count">{{ images().length }} imagem(ns)</p>
     <div class="grid">
       @for (img of images(); track img.nasaId) {
-        <button class="tile" (click)="openLightbox(img)">
-          <img [src]="img.thumbUrl" [alt]="img.title" loading="lazy" />
-          <span class="tile-cam">{{ img.title }}</span>
+        <button class="card" appTilt (click)="openLightbox(img)">
+          <span class="card-glow"></span>
+          <span class="card-media">
+            <img [src]="img.thumbUrl" [alt]="img.title" loading="lazy" />
+          </span>
+          <span class="card-overlay">
+            @if (img.center) {
+              <span class="card-tag">{{ img.center }}</span>
+            }
+            <span class="card-title">{{ img.title }}</span>
+          </span>
+          <span class="card-glare"></span>
         </button>
       }
     </div>
