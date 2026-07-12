@@ -1,6 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { Apod } from '../models/apod.model';
 import { MarsPhotosResponse, RoverName } from '../models/mars.model';
@@ -53,5 +54,18 @@ export class NasaApiService {
       `${this.base}/mars-photos/api/v1/rovers/${rover}/photos`,
       { params: this.withKey(params) },
     );
+  }
+
+  /**
+   * Fotos mais recentes de um rover. Ótimo default: sempre traz imagens
+   * reais sem precisar adivinhar uma data com fotos disponíveis.
+   */
+  getMarsLatestPhotos(rover: RoverName): Observable<MarsPhotosResponse> {
+    return this.http
+      .get<{ latest_photos: MarsPhotosResponse['photos'] }>(
+        `${this.base}/mars-photos/api/v1/rovers/${rover}/latest_photos`,
+        { params: this.withKey() },
+      )
+      .pipe(map((res) => ({ photos: res.latest_photos ?? [] })));
   }
 }

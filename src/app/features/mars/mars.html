@@ -19,15 +19,22 @@
         </button>
       }
     </div>
-    <label class="date-field">
-      <span>Data terrestre</span>
-      <input
-        type="date"
-        [value]="earthDate()"
-        max="2025-12-31"
-        (change)="onDateChange($any($event.target).value)"
-      />
-    </label>
+    <div class="date-wrap">
+      <label class="date-field">
+        <span>Data terrestre</span>
+        <input
+          type="date"
+          [value]="earthDate()"
+          max="2025-12-31"
+          (change)="onDateChange($any($event.target).value)"
+        />
+      </label>
+      @if (!showingLatest()) {
+        <button class="chip latest-btn" (click)="loadLatest()" title="Ver as fotos mais recentes">
+          ↺ Mais recentes
+        </button>
+      }
+    </div>
   </div>
 
   @if (loading()) {
@@ -38,15 +45,19 @@
   } @else if (error()) {
     <div class="state glass error">
       <p>⚠️ {{ error() }}</p>
-      <button class="btn btn-primary" (click)="load()">Tentar novamente</button>
+      <button class="btn btn-primary" (click)="retry()">Tentar novamente</button>
     </div>
   } @else if (photos().length === 0) {
     <div class="state glass">
       <p>🛰️ Nenhuma foto para esse rover nesta data.</p>
-      <p class="hint">Tente outra data — os rovers não fotografam todos os dias.</p>
+      <p class="hint">Os rovers não fotografam todos os dias — tente outra data.</p>
+      <button class="btn btn-primary" (click)="loadLatest()">Ver as mais recentes</button>
     </div>
   } @else {
-    <p class="count">{{ photos().length }} foto(s) encontrada(s)</p>
+    <p class="count">
+      {{ photos().length }} foto(s)
+      @if (showingLatest()) { · mais recentes } @else { · em {{ earthDate() | date: 'longDate' }} }
+    </p>
     <div class="grid">
       @for (photo of photos(); track photo.id) {
         <button class="tile" (click)="openLightbox(photo)">
