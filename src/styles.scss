@@ -37,19 +37,6 @@
   --font-body: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
-/* Ângulo animável da borda em gradiente cônico dos cards (neon glow). */
-@property --border-angle {
-  syntax: '<angle>';
-  initial-value: 0deg;
-  inherits: false;
-}
-
-@keyframes borderSpin {
-  to {
-    --border-angle: 360deg;
-  }
-}
-
 * {
   box-sizing: border-box;
 }
