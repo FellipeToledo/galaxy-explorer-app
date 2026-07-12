@@ -196,8 +196,8 @@
   z-index: -1;
   top: 50%;
   left: 50%;
-  width: 122%;
-  height: 122%;
+  width: 107%;
+  height: 107%;
   background: conic-gradient(
     from 0deg,
     transparent 0%,
@@ -206,19 +206,19 @@
     var(--c3) 50%,
     transparent 62%
   );
-  filter: blur(15px);
+  filter: blur(9px);
   opacity: 0;
   transform: translate(-50%, -50%) rotate(0deg);
   transition: opacity 0.35s ease;
 }
 
 .card.in-view::after {
-  opacity: 0.35;
+  opacity: 0.3;
   animation: cardSpin 4s linear infinite;
 }
 
 .card:hover::after {
-  opacity: 0.75;
+  opacity: 0.6;
   animation-duration: 2.2s;
 }
 
