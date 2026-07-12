@@ -8,12 +8,11 @@ import {
   ROVERS,
   RoverName,
 } from '../../core/models/mars.model';
-import { TiltDirective } from '../../shared/tilt/tilt';
 
 @Component({
   selector: 'app-mars',
   standalone: true,
-  imports: [DatePipe, TiltDirective],
+  imports: [DatePipe],
   templateUrl: './mars.html',
   styleUrl: './mars.scss',
 })
