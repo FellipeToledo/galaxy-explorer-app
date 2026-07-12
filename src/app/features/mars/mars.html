@@ -30,6 +30,19 @@
     </form>
   </div>
 
+  <!-- Categorias (refinam a busca do rover) -->
+  <div class="categories">
+    @for (c of categories; track c.id) {
+      <button
+        class="cat"
+        [class.active]="category() === c.id && rover()"
+        (click)="selectCategory(c.id)"
+      >
+        <span class="cat-icon">{{ c.icon }}</span> {{ c.label }}
+      </button>
+    }
+  </div>
+
   @if (loading()) {
     <div class="state glass">
       <div class="spinner"></div>
@@ -43,15 +56,33 @@
   } @else if (images().length === 0) {
     <div class="state glass">
       <p>🛰️ Nenhuma imagem encontrada.</p>
-      <p class="hint">Tente outro rover ou outro termo de busca.</p>
+      <p class="hint">Tente outro rover, outra categoria ou outro termo de busca.</p>
     </div>
   } @else {
     <p class="count">{{ images().length }} imagem(ns)</p>
     <div class="grid">
-      @for (img of images(); track img.nasaId) {
-        <button class="tile" (click)="openLightbox(img)">
-          <img [src]="img.thumbUrl" [alt]="img.title" loading="lazy" />
-          <span class="tile-cam">{{ img.title }}</span>
+      @for (img of images(); track img.nasaId; let i = $index) {
+        <button class="card" [attr.data-theme]="i % 4" (click)="openLightbox(img)">
+          <span class="card-body">
+            <span class="card-img">
+              <span class="card-img-glow"></span>
+              <img class="card-photo" [src]="img.thumbUrl" [alt]="img.title" loading="lazy" />
+              <span class="card-badge">{{ img.center || 'NASA' }}</span>
+            </span>
+            <span class="card-info">
+              <span class="card-brand">Marte</span>
+              <span class="card-name">{{ img.title }}</span>
+              @if (img.description) {
+                <span class="card-desc">{{ img.description }}</span>
+              }
+              <span class="card-meta">
+                @if (img.dateCreated) {
+                  <span class="card-date">{{ img.dateCreated | date: 'mediumDate' }}</span>
+                }
+                <span class="card-cta">Ver imagem →</span>
+              </span>
+            </span>
+          </span>
         </button>
       }
     </div>
