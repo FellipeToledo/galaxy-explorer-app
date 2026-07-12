@@ -62,7 +62,7 @@
     <p class="count">{{ images().length }} imagem(ns)</p>
     <div class="grid">
       @for (img of images(); track img.nasaId; let i = $index) {
-        <button class="card" [attr.data-theme]="i % 4" (click)="openLightbox(img)">
+        <button class="card" appInView [attr.data-theme]="i % 4" (click)="openLightbox(img)">
           <span class="card-body">
             <span class="card-img">
               <span class="card-img-glow"></span>
@@ -72,13 +72,11 @@
             <span class="card-info">
               <span class="card-brand">Marte</span>
               <span class="card-name">{{ img.title }}</span>
-              @if (img.description) {
-                <span class="card-desc">{{ img.description }}</span>
-              }
+              <span class="card-desc">{{ img.description || 'Imagem do acervo da NASA.' }}</span>
               <span class="card-meta">
-                @if (img.dateCreated) {
-                  <span class="card-date">{{ img.dateCreated | date: 'mediumDate' }}</span>
-                }
+                <span class="card-date">
+                  {{ img.dateCreated ? (img.dateCreated | date: 'mediumDate') : '' }}
+                </span>
                 <span class="card-cta">Ver imagem →</span>
               </span>
             </span>

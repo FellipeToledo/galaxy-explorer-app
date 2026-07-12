@@ -8,11 +8,12 @@ import {
   ROVERS,
   RoverName,
 } from '../../core/models/mars.model';
+import { InViewDirective } from '../../shared/in-view/in-view';
 
 @Component({
   selector: 'app-mars',
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, InViewDirective],
   templateUrl: './mars.html',
   styleUrl: './mars.scss',
 })
