@@ -1,13 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
 import { NasaApiService } from '../../core/services/nasa-api.service';
-import {
-  MarsPhoto,
-  MarsPhotosResponse,
-  ROVERS,
-  RoverName,
-} from '../../core/models/mars.model';
+import { NasaImage, ROVERS, RoverName } from '../../core/models/mars.model';
 
 @Component({
   selector: 'app-mars',
@@ -20,101 +14,64 @@ export class MarsComponent implements OnInit {
   private readonly api = inject(NasaApiService);
 
   protected readonly rovers = ROVERS;
-  protected readonly photos = signal<MarsPhoto[]>([]);
+  protected readonly images = signal<NasaImage[]>([]);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
 
-  protected readonly rover = signal<RoverName>('curiosity');
-  /** Data terrestre selecionada (vazia = usando as fotos mais recentes). */
-  protected readonly earthDate = signal<string>('');
-  /** true enquanto exibindo as fotos mais recentes (sem filtro de data). */
-  protected readonly showingLatest = signal(true);
+  protected readonly rover = signal<RoverName | null>('perseverance');
+  protected readonly query = signal<string>('');
 
-  /** Foto ampliada no lightbox (ou null). */
-  protected readonly lightbox = signal<MarsPhoto | null>(null);
+  /** Imagem ampliada no lightbox (ou null). */
+  protected readonly lightbox = signal<NasaImage | null>(null);
 
   ngOnInit(): void {
-    this.loadLatest();
-  }
-
-  /** Carrega as fotos mais recentes do rover atual. */
-  protected loadLatest(): void {
-    this.loading.set(true);
-    this.error.set(null);
-    this.showingLatest.set(true);
-
-    this.api.getMarsLatestPhotos(this.rover()).subscribe({
-      next: (res) => {
-        this.applyPhotos(res);
-        // Sincroniza o seletor com a data das fotos mais recentes.
-        this.earthDate.set(res.photos[0]?.earth_date ?? '');
-        this.loading.set(false);
-      },
-      error: (err) => this.handleError(err),
-    });
-  }
-
-  /** Carrega as fotos de uma data terrestre específica. */
-  protected loadByDate(): void {
-    if (!this.earthDate()) {
-      this.loadLatest();
-      return;
-    }
-    this.loading.set(true);
-    this.error.set(null);
-    this.showingLatest.set(false);
-
-    this.api.getMarsPhotos(this.rover(), this.earthDate()).subscribe({
-      next: (res) => {
-        this.applyPhotos(res);
-        this.loading.set(false);
-      },
-      error: (err) => this.handleError(err),
-    });
+    this.selectRover('perseverance');
   }
 
   protected selectRover(name: RoverName): void {
-    if (name !== this.rover()) {
-      this.rover.set(name);
-      // Ao trocar de rover, volta para as fotos mais recentes dele.
-      this.loadLatest();
-    }
+    this.rover.set(name);
+    const rover = this.rovers.find((r) => r.name === name);
+    this.query.set('');
+    this.search(rover?.query ?? name);
   }
 
-  protected onDateChange(value: string): void {
-    if (value) {
-      this.earthDate.set(value);
-      this.loadByDate();
+  protected onSearch(term: string): void {
+    const trimmed = term.trim();
+    if (!trimmed) {
+      return;
     }
+    this.rover.set(null);
+    this.search(trimmed);
   }
 
   protected retry(): void {
-    this.showingLatest() ? this.loadLatest() : this.loadByDate();
+    const rover = this.rovers.find((r) => r.name === this.rover());
+    this.search(rover?.query ?? this.query() ?? 'Mars rover');
   }
 
-  protected openLightbox(photo: MarsPhoto): void {
-    this.lightbox.set(photo);
+  private search(term: string): void {
+    this.loading.set(true);
+    this.error.set(null);
+
+    this.api.searchImages(term).subscribe({
+      next: (imgs) => {
+        this.images.set(imgs);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.error.set(
+          'Não foi possível carregar as imagens. Verifique sua conexão e tente novamente.',
+        );
+        this.loading.set(false);
+      },
+    });
+  }
+
+  protected openLightbox(img: NasaImage): void {
+    this.lightbox.set(img);
   }
 
   protected closeLightbox(): void {
     this.lightbox.set(null);
-  }
-
-  private applyPhotos(res: MarsPhotosResponse): void {
-    this.photos.set(res.photos ?? []);
-  }
-
-  private handleError(err: unknown): void {
-    // 404 na API de Marte = não há fotos para esse rover/data.
-    // Tratamos como estado vazio, não como erro de verdade.
-    if (err instanceof HttpErrorResponse && err.status === 404) {
-      this.photos.set([]);
-      this.error.set(null);
-    } else {
-      this.error.set(
-        'Não foi possível carregar as fotos. Verifique sua conexão, a chave da API ou o limite de requisições.',
-      );
-    }
-    this.loading.set(false);
   }
 }

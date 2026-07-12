@@ -8,9 +8,11 @@ glassmorphism e acentos violeta/ciano em um visual de espaço profundo.
 
 - **Foto do Dia (APOD)** — imagem/vídeo astronômico do dia com explicação,
   seletor de data, botão "Surpreenda-me" (data aleatória) e link para HD.
-- **Marte (Mars Rover Photos)** — galeria de fotos dos rovers (Perseverance,
-  Curiosity, Opportunity, Spirit) com filtro por rover e data, além de
-  lightbox para ampliar cada imagem.
+- **Marte** — galeria de imagens dos rovers e missões em Marte, com chips por
+  rover (Perseverance, Curiosity, Opportunity, Spirit), busca livre e lightbox.
+  Usa a **NASA Image and Video Library** (`images-api.nasa.gov`), pois a antiga
+  **Mars Rover Photos API foi arquivada pela NASA em 2025**. Essa biblioteca é
+  aberta e não exige chave.
 
 ## 🔑 Chave da API
 
@@ -62,5 +64,6 @@ properties em `src/styles.scss`.
 
 - **Asteroides (NeoWs)** — dashboard de objetos próximos à Terra com gráficos.
 - **EPIC** — imagens de disco completo da Terra.
-- **Busca de mídia** — acervo de imagens/vídeos da NASA.
-- Filtro por câmera na tela de Marte e paginação/scroll infinito.
+- **Busca de mídia** — expandir a busca da biblioteca para uma seção própria.
+- Vídeos e imagens em alta resolução (asset manifest da biblioteca).
+- Paginação / scroll infinito na galeria.

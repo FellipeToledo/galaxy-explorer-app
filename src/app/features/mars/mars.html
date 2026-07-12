@@ -1,9 +1,9 @@
 <section class="mars container">
   <div class="head">
     <div>
-      <p class="eyebrow">NASA · Mars Rover Photos</p>
+      <p class="eyebrow">NASA · Image and Video Library</p>
       <h1 class="title">Poeira <span class="gradient-text">Vermelha</span></h1>
-      <p class="subtitle">Imagens capturadas pelos rovers na superfície de Marte.</p>
+      <p class="subtitle">Imagens dos rovers e das missões da NASA em Marte.</p>
     </div>
   </div>
 
@@ -19,22 +19,15 @@
         </button>
       }
     </div>
-    <div class="date-wrap">
-      <label class="date-field">
-        <span>Data terrestre</span>
-        <input
-          type="date"
-          [value]="earthDate()"
-          max="2025-12-31"
-          (change)="onDateChange($any($event.target).value)"
-        />
-      </label>
-      @if (!showingLatest()) {
-        <button class="chip latest-btn" (click)="loadLatest()" title="Ver as fotos mais recentes">
-          ↺ Mais recentes
-        </button>
-      }
-    </div>
+    <form class="search" (submit)="$event.preventDefault(); onSearch(searchInput.value)">
+      <input
+        #searchInput
+        type="search"
+        placeholder="Buscar (ex.: crater, dunes…)"
+        aria-label="Buscar imagens"
+      />
+      <button type="submit" class="chip search-btn">🔍</button>
+    </form>
   </div>
 
   @if (loading()) {
@@ -47,22 +40,18 @@
       <p>⚠️ {{ error() }}</p>
       <button class="btn btn-primary" (click)="retry()">Tentar novamente</button>
     </div>
-  } @else if (photos().length === 0) {
+  } @else if (images().length === 0) {
     <div class="state glass">
-      <p>🛰️ Nenhuma foto para esse rover nesta data.</p>
-      <p class="hint">Os rovers não fotografam todos os dias — tente outra data.</p>
-      <button class="btn btn-primary" (click)="loadLatest()">Ver as mais recentes</button>
+      <p>🛰️ Nenhuma imagem encontrada.</p>
+      <p class="hint">Tente outro rover ou outro termo de busca.</p>
     </div>
   } @else {
-    <p class="count">
-      {{ photos().length }} foto(s)
-      @if (showingLatest()) { · mais recentes } @else { · em {{ earthDate() | date: 'longDate' }} }
-    </p>
+    <p class="count">{{ images().length }} imagem(ns)</p>
     <div class="grid">
-      @for (photo of photos(); track photo.id) {
-        <button class="tile" (click)="openLightbox(photo)">
-          <img [src]="photo.img_src" [alt]="photo.camera.full_name" loading="lazy" />
-          <span class="tile-cam">{{ photo.camera.name }}</span>
+      @for (img of images(); track img.nasaId) {
+        <button class="tile" (click)="openLightbox(img)">
+          <img [src]="img.thumbUrl" [alt]="img.title" loading="lazy" />
+          <span class="tile-cam">{{ img.title }}</span>
         </button>
       }
     </div>
@@ -70,14 +59,21 @@
 </section>
 
 <!-- Lightbox -->
-@if (lightbox(); as photo) {
+@if (lightbox(); as img) {
   <div class="lightbox" (click)="closeLightbox()">
     <button class="close" (click)="closeLightbox()" aria-label="Fechar">✕</button>
     <figure (click)="$event.stopPropagation()">
-      <img [src]="photo.img_src" [alt]="photo.camera.full_name" />
+      <img [src]="img.thumbUrl" [alt]="img.title" />
       <figcaption class="glass">
-        <strong>{{ photo.camera.full_name }}</strong>
-        <span>{{ photo.rover.name }} · Sol {{ photo.sol }} · {{ photo.earth_date | date: 'longDate' }}</span>
+        <strong>{{ img.title }}</strong>
+        @if (img.dateCreated) {
+          <span class="fc-date">{{ img.dateCreated | date: 'longDate' }}
+            @if (img.center) { · {{ img.center }} }
+          </span>
+        }
+        @if (img.description) {
+          <span class="fc-desc">{{ img.description }}</span>
+        }
       </figcaption>
     </figure>
   </div>
