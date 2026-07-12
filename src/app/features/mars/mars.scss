@@ -65,35 +65,35 @@
   box-shadow: 0 0 20px rgba(180, 83, 9, 0.5);
 }
 
-.date-wrap {
+.search {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.5rem;
 }
 
-.latest-btn {
-  padding: 0.4rem 0.85rem;
-  font-size: 0.78rem;
-}
-
-.date-field {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-size: 0.68rem;
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.date-field input {
-  background: transparent;
-  border: none;
+.search input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
   color: var(--text);
   font-family: var(--font-body);
-  font-size: 0.9rem;
-  color-scheme: dark;
-  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0.5rem 0.9rem;
+  min-width: 200px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.search input:focus {
+  border-color: rgba(139, 92, 246, 0.6);
+}
+
+.search input::placeholder {
+  color: var(--text-dim);
+}
+
+.search-btn {
+  padding: 0.45rem 0.7rem;
 }
 
 .state {
@@ -153,14 +153,26 @@
 
 .tile-cam {
   position: absolute;
-  left: 0.5rem;
-  bottom: 0.5rem;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  text-align: left;
   font-size: 0.68rem;
   font-weight: 600;
-  padding: 0.2rem 0.5rem;
-  border-radius: 6px;
-  background: rgba(3, 1, 9, 0.7);
+  padding: 1.4rem 0.6rem 0.5rem;
+  background: linear-gradient(transparent, rgba(3, 1, 9, 0.92));
   color: var(--text);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.tile:hover .tile-cam,
+.tile:focus-visible .tile-cam {
+  opacity: 1;
 }
 
 /* Lightbox */
@@ -209,6 +221,19 @@
 
 .lightbox figcaption strong {
   color: var(--text);
+  font-size: 0.98rem;
+}
+
+.lightbox .fc-date {
+  color: var(--cyan);
+  font-size: 0.8rem;
+}
+
+.lightbox .fc-desc {
+  color: var(--text-muted);
+  line-height: 1.6;
+  max-height: 30vh;
+  overflow-y: auto;
 }
 
 .close {

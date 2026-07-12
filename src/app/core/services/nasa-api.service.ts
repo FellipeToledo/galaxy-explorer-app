@@ -4,16 +4,33 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { Apod } from '../models/apod.model';
-import { MarsPhotosResponse, RoverName } from '../models/mars.model';
+import { NasaImage } from '../models/mars.model';
+
+/** Formato bruto da resposta da NASA Image and Video Library. */
+interface ImageLibraryItem {
+  data?: {
+    nasa_id?: string;
+    title?: string;
+    description?: string;
+    date_created?: string;
+    center?: string;
+  }[];
+  links?: { href?: string; render?: string; rel?: string }[];
+}
+interface ImageLibraryResponse {
+  collection?: { items?: ImageLibraryItem[] };
+}
 
 /**
- * Serviço central de acesso às APIs abertas da NASA (https://api.nasa.gov/).
- * A chave é anexada automaticamente em cada requisição.
+ * Serviço central de acesso às APIs abertas da NASA.
+ * - api.nasa.gov (APOD, etc.) usa a chave da configuração.
+ * - images-api.nasa.gov (biblioteca de mídia) é aberta e não exige chave.
  */
 @Injectable({ providedIn: 'root' })
 export class NasaApiService {
   private readonly http = inject(HttpClient);
   private readonly base = environment.nasaApiBase;
+  private readonly imageBase = 'https://images-api.nasa.gov';
 
   private withKey(params: Record<string, string | number> = {}): HttpParams {
     let httpParams = new HttpParams().set('api_key', environment.nasaApiKey);
@@ -32,40 +49,40 @@ export class NasaApiService {
     });
   }
 
-  // ── Mars Rover Photos ───────────────────────────────────────────────────
+  // ── NASA Image and Video Library ────────────────────────────────────────
   /**
-   * Fotos de um rover em uma data terrestre (YYYY-MM-DD).
-   * `camera` opcional filtra por câmera (ex.: FHAZ, NAVCAM, MAST).
+   * Busca imagens no acervo oficial da NASA.
+   * Substitui a API Mars Rover Photos (arquivada em 2025) e também serve
+   * de base para uma futura busca livre de mídia.
    */
-  getMarsPhotos(
-    rover: RoverName,
-    earthDate: string,
-    camera?: string,
-    page = 1,
-  ): Observable<MarsPhotosResponse> {
-    const params: Record<string, string | number> = {
-      earth_date: earthDate,
-      page,
-    };
-    if (camera) {
-      params['camera'] = camera;
-    }
-    return this.http.get<MarsPhotosResponse>(
-      `${this.base}/mars-photos/api/v1/rovers/${rover}/photos`,
-      { params: this.withKey(params) },
-    );
+  searchImages(query: string): Observable<NasaImage[]> {
+    const params = new HttpParams()
+      .set('q', query)
+      .set('media_type', 'image');
+    return this.http
+      .get<ImageLibraryResponse>(`${this.imageBase}/search`, { params })
+      .pipe(map((res) => this.mapImages(res)));
   }
 
-  /**
-   * Fotos mais recentes de um rover. Ótimo default: sempre traz imagens
-   * reais sem precisar adivinhar uma data com fotos disponíveis.
-   */
-  getMarsLatestPhotos(rover: RoverName): Observable<MarsPhotosResponse> {
-    return this.http
-      .get<{ latest_photos: MarsPhotosResponse['photos'] }>(
-        `${this.base}/mars-photos/api/v1/rovers/${rover}/latest_photos`,
-        { params: this.withKey() },
-      )
-      .pipe(map((res) => ({ photos: res.latest_photos ?? [] })));
+  private mapImages(res: ImageLibraryResponse): NasaImage[] {
+    const items = res.collection?.items ?? [];
+    return items
+      .map((item): NasaImage | null => {
+        const data = item.data?.[0];
+        const thumbUrl = item.links?.find((l) => l.render === 'image')?.href
+          ?? item.links?.[0]?.href;
+        if (!data?.nasa_id || !thumbUrl) {
+          return null;
+        }
+        return {
+          nasaId: data.nasa_id,
+          title: data.title ?? 'Sem título',
+          description: data.description,
+          dateCreated: data.date_created,
+          center: data.center,
+          thumbUrl,
+        };
+      })
+      .filter((x): x is NasaImage => x !== null);
   }
 }
