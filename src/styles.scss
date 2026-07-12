@@ -1,0 +1,163 @@
+/* ============================================================
+   Galaxy Explorer — tema global
+   Estética de espaço profundo: fundos em gradiente, vidro
+   (glassmorphism), acentos violeta/ciano e brilho sutil.
+   ============================================================ */
+
+:root {
+  /* Fundos */
+  --space-0: #030109;
+  --space-1: #08031a;
+  --space-2: #0d0726;
+
+  /* Acentos */
+  --violet: #8b5cf6;
+  --indigo: #6366f1;
+  --cyan: #22d3ee;
+  --magenta: #e879f9;
+  --amber: #fbbf24;
+
+  /* Texto */
+  --text: #e9e8ff;
+  --text-muted: #9c9ac4;
+  --text-dim: #6b6a8f;
+
+  /* Vidro */
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-bg-strong: rgba(255, 255, 255, 0.07);
+  --glass-border: rgba(255, 255, 255, 0.1);
+
+  /* Efeitos */
+  --glow-violet: 0 0 32px rgba(139, 92, 246, 0.45);
+  --glow-cyan: 0 0 32px rgba(34, 211, 238, 0.4);
+  --radius: 18px;
+  --radius-sm: 12px;
+
+  --font-display: 'Orbitron', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--text);
+  background:
+    radial-gradient(1200px 800px at 80% -10%, rgba(99, 102, 241, 0.18), transparent 60%),
+    radial-gradient(1000px 700px at 10% 10%, rgba(232, 121, 249, 0.12), transparent 55%),
+    radial-gradient(900px 900px at 50% 120%, rgba(34, 211, 238, 0.1), transparent 60%),
+    linear-gradient(180deg, var(--space-0), var(--space-1) 40%, var(--space-0));
+  background-attachment: fixed;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  letter-spacing: 0.5px;
+  line-height: 1.1;
+  margin: 0;
+}
+
+a {
+  color: var(--cyan);
+  text-decoration: none;
+}
+
+/* ── Utilitários ────────────────────────────────────────── */
+
+.container {
+  width: min(1200px, 100% - 3rem);
+  margin-inline: auto;
+}
+
+.glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.gradient-text {
+  background: linear-gradient(120deg, var(--cyan), var(--violet) 55%, var(--magenta));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.btn {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-strong);
+  color: var(--text);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(139, 92, 246, 0.6);
+  box-shadow: var(--glow-violet);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: linear-gradient(120deg, var(--violet), var(--indigo));
+  border-color: transparent;
+}
+
+/* Scrollbar temática */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--space-0);
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(var(--violet), var(--indigo));
+  border-radius: 999px;
+}
+
+/* Spinner reutilizável */
+.spinner {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.12);
+  border-top-color: var(--cyan);
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
