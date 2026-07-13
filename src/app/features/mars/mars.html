@@ -1,9 +1,11 @@
 <section class="mars container">
   <div class="head">
     <div>
-      <p class="eyebrow">NASA · Image and Video Library</p>
-      <h1 class="title">Poeira <span class="gradient-text">Vermelha</span></h1>
-      <p class="subtitle">Imagens dos rovers e das missões da NASA em Marte.</p>
+      <p class="eyebrow">{{ 'mars.eyebrow' | t }}</p>
+      <h1 class="title">
+        {{ 'mars.title1' | t }} <span class="gradient-text">{{ 'mars.title2' | t }}</span>
+      </h1>
+      <p class="subtitle">{{ 'mars.subtitle' | t }}</p>
     </div>
   </div>
 
@@ -31,10 +33,10 @@
           (input)="onSearchInput($any($event.target).value)"
           (focus)="showSuggestions.set(true)"
           (keydown)="onSearchKeydown($event)"
-          placeholder="Buscar (ex.: crater, dunes…)"
-          aria-label="Buscar imagens"
+          [placeholder]="'mars.searchPlaceholder' | t"
+          [attr.aria-label]="'mars.searchAria' | t"
         />
-        <button type="submit" class="chip search-btn" aria-label="Buscar">🔍</button>
+        <button type="submit" class="chip search-btn" [attr.aria-label]="'mars.searchAria' | t">🔍</button>
       </form>
 
       @if (showSuggestions() && filteredSuggestions().length > 0) {
@@ -60,23 +62,23 @@
   <!-- Filtro por ano (API) + ordenação (client-side) -->
   <div class="controls">
     <div class="control">
-      <span>Ano</span>
+      <span>{{ 'mars.year' | t }}</span>
       <app-glass-select
-        [options]="yearOptions"
+        [options]="yearOptions()"
         [value]="year()"
         (valueChange)="onYearChange($event)"
         minWidth="150px"
-        ariaLabel="Filtrar por ano"
+        [ariaLabel]="'mars.filterYearAria' | t"
       />
     </div>
     <div class="control">
-      <span>Ordenar</span>
+      <span>{{ 'mars.sort' | t }}</span>
       <app-glass-select
-        [options]="sortOptions"
+        [options]="sortOptions()"
         [value]="sort()"
         (valueChange)="onSortChange($event)"
         minWidth="160px"
-        ariaLabel="Ordenar imagens"
+        [ariaLabel]="'mars.sortAria' | t"
       />
     </div>
   </div>
@@ -84,20 +86,20 @@
   @if (loading()) {
     <div class="state glass">
       <div class="spinner"></div>
-      <p>Recebendo transmissão de Marte…</p>
+      <p>{{ 'mars.loading' | t }}</p>
     </div>
-  } @else if (error()) {
+  } @else if (error(); as err) {
     <div class="state glass error">
-      <p>⚠️ {{ error() }}</p>
-      <button class="btn btn-primary" (click)="retry()">Tentar novamente</button>
+      <p>⚠️ {{ err | t }}</p>
+      <button class="btn btn-primary" (click)="retry()">{{ 'common.retry' | t }}</button>
     </div>
   } @else if (images().length === 0) {
     <div class="state glass">
-      <p>🛰️ Nenhuma imagem encontrada.</p>
-      <p class="hint">Tente outro rover, outro ano ou outro termo de busca.</p>
+      <p>{{ 'mars.empty' | t }}</p>
+      <p class="hint">{{ 'mars.emptyHint' | t }}</p>
     </div>
   } @else {
-    <p class="count">{{ images().length }} imagem(ns)</p>
+    <p class="count">{{ 'mars.count' | t: { count: images().length } }}</p>
     <div class="grid">
       @for (img of sortedImages(); track img.nasaId; let i = $index) {
         <button class="card" appInView [attr.data-theme]="i % 4" (click)="openLightbox(img)">
@@ -109,14 +111,14 @@
                 <span class="card-badge">{{ img.center || 'NASA' }}</span>
               </span>
               <span class="card-info">
-                <span class="card-brand">Marte</span>
+                <span class="card-brand">{{ 'mars.cardBrand' | t }}</span>
                 <span class="card-name">{{ img.title }}</span>
-                <span class="card-desc">{{ img.description || 'Imagem do acervo da NASA.' }}</span>
+                <span class="card-desc">{{ img.description || ('mars.cardFallbackDesc' | t) }}</span>
                 <span class="card-meta">
                   <span class="card-date">
-                    {{ img.dateCreated ? (img.dateCreated | date: 'mediumDate') : '' }}
+                    {{ img.dateCreated ? (img.dateCreated | date: 'mediumDate' : undefined : translate.lang()) : '' }}
                   </span>
-                  <span class="card-cta">Ver imagem →</span>
+                  <span class="card-cta">{{ 'mars.viewImage' | t }}</span>
                 </span>
               </span>
             </span>
@@ -131,11 +133,11 @@
         @if (loadingMore()) {
           <div class="spinner"></div>
         } @else {
-          <button class="btn" (click)="loadMore()">Carregar mais</button>
+          <button class="btn" (click)="loadMore()">{{ 'mars.loadMore' | t }}</button>
         }
       </div>
     } @else {
-      <p class="end-note">✦ Fim dos resultados ✦</p>
+      <p class="end-note">{{ 'mars.end' | t }}</p>
     }
   }
 </section>
@@ -143,13 +145,13 @@
 <!-- Lightbox -->
 @if (lightbox(); as img) {
   <div class="lightbox" (click)="closeLightbox()">
-    <button class="close" (click)="closeLightbox()" aria-label="Fechar">✕</button>
+    <button class="close" (click)="closeLightbox()" [attr.aria-label]="'mars.close' | t">✕</button>
     <figure (click)="$event.stopPropagation()">
       <img [src]="img.thumbUrl" [alt]="img.title" />
       <figcaption class="glass">
         <strong>{{ img.title }}</strong>
         @if (img.dateCreated) {
-          <span class="fc-date">{{ img.dateCreated | date: 'longDate' }}
+          <span class="fc-date">{{ img.dateCreated | date: 'longDate' : undefined : translate.lang() }}
             @if (img.center) { · {{ img.center }} }
           </span>
         }

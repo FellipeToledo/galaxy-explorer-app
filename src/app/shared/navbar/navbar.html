@@ -1,13 +1,24 @@
 <header class="nav glass">
-  <a routerLink="/" class="brand" aria-label="Galaxy Explorer — início">
+  <a routerLink="/" class="brand" [attr.aria-label]="'nav.brandAria' | t">
     <span class="logo" aria-hidden="true">🪐</span>
     <span class="brand-text">Galaxy<span class="gradient-text">Explorer</span></span>
   </a>
 
-  <nav class="links">
-    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-      Foto do Dia
-    </a>
-    <a routerLink="/mars" routerLinkActive="active">Marte</a>
-  </nav>
+  <div class="nav-right">
+    <nav class="links">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+        {{ 'nav.apod' | t }}
+      </a>
+      <a routerLink="/mars" routerLinkActive="active">{{ 'nav.mars' | t }}</a>
+    </nav>
+
+    <app-glass-select
+      class="lang-select"
+      [options]="langOptions"
+      [value]="currentLang()"
+      (valueChange)="onLangChange($event)"
+      minWidth="140px"
+      [ariaLabel]="'nav.language' | t"
+    />
+  </div>
 </header>

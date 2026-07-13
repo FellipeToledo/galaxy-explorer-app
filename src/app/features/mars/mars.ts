@@ -22,6 +22,8 @@ import {
   GlassSelectComponent,
   SelectOption,
 } from '../../shared/glass-select/glass-select';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { TranslateService } from '../../core/i18n/translate.service';
 
 /** Tamanho de página padrão da NASA Image and Video Library. */
 const PAGE_SIZE = 100;
@@ -55,31 +57,46 @@ const SEARCH_SUGGESTIONS: string[] = [
 @Component({
   selector: 'app-mars',
   standalone: true,
-  imports: [DatePipe, InViewDirective, ScrollEndDirective, GlassSelectComponent],
+  imports: [
+    DatePipe,
+    InViewDirective,
+    ScrollEndDirective,
+    GlassSelectComponent,
+    TranslatePipe,
+  ],
   templateUrl: './mars.html',
   styleUrl: './mars.scss',
 })
 export class MarsComponent implements OnInit {
   private readonly api = inject(NasaApiService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  protected readonly translate = inject(TranslateService);
 
   protected readonly rovers = ROVERS;
 
-  /** Opções de ordenação para o dropdown custom. */
-  protected readonly sortOptions: SelectOption[] = SORT_OPTIONS.map((s) => ({
-    label: s.label,
-    value: s.id,
-  }));
-
-  /** Opções de ano (Todos + atual → 2004) para o dropdown custom. */
-  protected readonly yearOptions: SelectOption[] = (() => {
+  /** Anos disponíveis (atual → 2004). */
+  private readonly years = ((): string[] => {
     const now = new Date().getFullYear();
-    const opts: SelectOption[] = [{ label: 'Todos os anos', value: '' }];
+    const list: string[] = [];
     for (let y = now; y >= FIRST_YEAR; y--) {
-      opts.push({ label: String(y), value: String(y) });
+      list.push(String(y));
     }
-    return opts;
+    return list;
   })();
+
+  /** Opções de ordenação (reativas ao idioma). */
+  protected readonly sortOptions = computed<SelectOption[]>(() =>
+    SORT_OPTIONS.map((s) => ({
+      label: this.translate.t('sort.' + s.id),
+      value: s.id,
+    })),
+  );
+
+  /** Opções de ano (reativas ao idioma para o rótulo "Todos os anos"). */
+  protected readonly yearOptions = computed<SelectOption[]>(() => [
+    { label: this.translate.t('mars.allYears'), value: '' },
+    ...this.years.map((y) => ({ label: y, value: y })),
+  ]);
 
   protected readonly images = signal<NasaImage[]>([]);
   protected readonly loading = signal(true);
@@ -252,9 +269,7 @@ export class MarsComponent implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.error.set(
-          'Não foi possível carregar as imagens. Verifique sua conexão e tente novamente.',
-        );
+        this.error.set('mars.error');
         this.loading.set(false);
       },
     });
