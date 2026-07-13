@@ -1,4 +1,12 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { NasaApiService } from '../../core/services/nasa-api.service';
 import {
@@ -20,6 +28,30 @@ const PAGE_SIZE = 100;
 /** Primeiro ano com imagens de rovers em Marte (Spirit/Opportunity, 2004). */
 const FIRST_YEAR = 2004;
 
+/** Sugestões de busca (termos comuns/relevantes de Marte) para o autocomplete. */
+const SEARCH_SUGGESTIONS: string[] = [
+  'Jezero Crater',
+  'Gale Crater',
+  'Mount Sharp',
+  'Endeavour Crater',
+  'Mars panorama',
+  'Mars sunset',
+  'Mars selfie',
+  'self-portrait',
+  'sample tube',
+  'Ingenuity helicopter',
+  'dust devil',
+  'sand dunes',
+  'rover tracks',
+  'drill hole',
+  'Martian landscape',
+  'rock formation',
+  'Perseverance landing',
+  'Martian sky',
+  'crater rim',
+  'ancient delta',
+];
+
 @Component({
   selector: 'app-mars',
   standalone: true,
@@ -29,6 +61,7 @@ const FIRST_YEAR = 2004;
 })
 export class MarsComponent implements OnInit {
   private readonly api = inject(NasaApiService);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   protected readonly rovers = ROVERS;
 
@@ -63,6 +96,20 @@ export class MarsComponent implements OnInit {
   protected readonly year = signal<string>('');
   /** Ordenação client-side (a API só entrega por relevância). */
   protected readonly sort = signal<SortMode>('relevance');
+
+  // ── Autocomplete da busca ──
+  protected readonly searchQuery = signal('');
+  protected readonly showSuggestions = signal(false);
+  protected readonly suggestionIndex = signal(-1);
+  protected readonly filteredSuggestions = computed<string[]>(() => {
+    const q = this.searchQuery().toLowerCase().trim();
+    const list = q
+      ? SEARCH_SUGGESTIONS.filter(
+          (s) => s.toLowerCase().includes(q) && s.toLowerCase() !== q,
+        )
+      : SEARCH_SUGGESTIONS;
+    return list.slice(0, 8);
+  });
 
   /** Imagens já ordenadas conforme o modo escolhido (sem novo request). */
   protected readonly sortedImages = computed<NasaImage[]>(() => {
@@ -107,13 +154,75 @@ export class MarsComponent implements OnInit {
     // Ordenação é client-side: não refaz request.
   }
 
-  protected onSearch(term: string): void {
-    const trimmed = term.trim();
-    if (!trimmed) {
+  protected onSearchInput(value: string): void {
+    this.searchQuery.set(value);
+    this.showSuggestions.set(true);
+    this.suggestionIndex.set(-1);
+  }
+
+  /** Enter/botão de busca: dispara a busca com o termo digitado. */
+  protected submitSearch(): void {
+    const term = this.searchQuery().trim();
+    if (!term) {
       return;
     }
+    this.showSuggestions.set(false);
     this.rover.set(null);
-    this.search(trimmed);
+    this.search(term);
+  }
+
+  protected selectSuggestion(term: string): void {
+    this.searchQuery.set(term);
+    this.showSuggestions.set(false);
+    this.suggestionIndex.set(-1);
+    this.rover.set(null);
+    this.search(term);
+  }
+
+  protected onSearchKeydown(event: KeyboardEvent): void {
+    const list = this.filteredSuggestions();
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        this.showSuggestions.set(true);
+        if (list.length) {
+          this.suggestionIndex.set((this.suggestionIndex() + 1) % list.length);
+        }
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        if (list.length) {
+          this.suggestionIndex.set(
+            (this.suggestionIndex() - 1 + list.length) % list.length,
+          );
+        }
+        break;
+      case 'Enter': {
+        const idx = this.suggestionIndex();
+        if (this.showSuggestions() && idx >= 0 && idx < list.length) {
+          event.preventDefault();
+          this.selectSuggestion(list[idx]);
+        }
+        // senão, deixa o submit do form disparar submitSearch()
+        break;
+      }
+      case 'Escape':
+        this.showSuggestions.set(false);
+        this.suggestionIndex.set(-1);
+        break;
+    }
+  }
+
+  /** Fecha as sugestões ao clicar fora do campo de busca. */
+  @HostListener('document:click', ['$event'])
+  protected onDocumentClick(event: MouseEvent): void {
+    if (!this.showSuggestions()) {
+      return;
+    }
+    const wrap = this.host.nativeElement.querySelector('.search-wrap');
+    if (wrap && !wrap.contains(event.target as Node)) {
+      this.showSuggestions.set(false);
+    }
   }
 
   protected retry(): void {

@@ -19,15 +19,42 @@
         </button>
       }
     </div>
-    <form class="search" (submit)="$event.preventDefault(); onSearch(searchInput.value)">
-      <input
-        #searchInput
-        type="search"
-        placeholder="Buscar (ex.: crater, dunes…)"
-        aria-label="Buscar imagens"
-      />
-      <button type="submit" class="chip search-btn">🔍</button>
-    </form>
+    <div class="search-wrap">
+      <form class="search" (submit)="$event.preventDefault(); submitSearch()">
+        <input
+          type="search"
+          class="search-input"
+          role="combobox"
+          autocomplete="off"
+          [value]="searchQuery()"
+          [attr.aria-expanded]="showSuggestions() && filteredSuggestions().length > 0"
+          (input)="onSearchInput($any($event.target).value)"
+          (focus)="showSuggestions.set(true)"
+          (keydown)="onSearchKeydown($event)"
+          placeholder="Buscar (ex.: crater, dunes…)"
+          aria-label="Buscar imagens"
+        />
+        <button type="submit" class="chip search-btn" aria-label="Buscar">🔍</button>
+      </form>
+
+      @if (showSuggestions() && filteredSuggestions().length > 0) {
+        <ul class="suggestions" role="listbox">
+          @for (s of filteredSuggestions(); track s; let i = $index) {
+            <li
+              class="suggestion"
+              role="option"
+              [class.active]="i === suggestionIndex()"
+              [attr.aria-selected]="i === suggestionIndex()"
+              (mousedown)="$event.preventDefault(); selectSuggestion(s)"
+              (mouseenter)="suggestionIndex.set(i)"
+            >
+              <span class="sug-icon" aria-hidden="true">🔍</span>
+              <span class="sug-text">{{ s }}</span>
+            </li>
+          }
+        </ul>
+      }
+    </div>
   </div>
 
   <!-- Filtro por ano (API) + ordenação (client-side) -->
