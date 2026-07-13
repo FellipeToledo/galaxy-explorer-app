@@ -26,20 +26,11 @@ export const ROVERS: { name: RoverName; label: string; query: string }[] = [
   { name: 'spirit', label: 'Spirit', query: 'Spirit rover Mars' },
 ];
 
-export type CategoryId = 'all' | 'rover' | 'surface' | 'team';
+/** Modos de ordenação (client-side; a API só entrega por relevância). */
+export type SortMode = 'relevance' | 'newest' | 'oldest';
 
-/**
- * Categorias como refinamentos de busca. O `modifier` é acrescentado à
- * query do rover para direcionar os resultados.
- */
-export const MARS_CATEGORIES: {
-  id: CategoryId;
-  label: string;
-  icon: string;
-  modifier: string;
-}[] = [
-  { id: 'all', label: 'Todas', icon: '✨', modifier: '' },
-  { id: 'rover', label: 'O Rover', icon: '🤖', modifier: 'selfie self-portrait' },
-  { id: 'surface', label: 'Superfície', icon: '🪐', modifier: 'surface landscape terrain' },
-  { id: 'team', label: 'Equipe & Missão', icon: '👩‍🚀', modifier: 'team engineers control room' },
+export const SORT_OPTIONS: { id: SortMode; label: string }[] = [
+  { id: 'relevance', label: 'Relevância' },
+  { id: 'newest', label: 'Mais recentes' },
+  { id: 'oldest', label: 'Mais antigas' },
 ];

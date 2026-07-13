@@ -30,17 +30,25 @@
     </form>
   </div>
 
-  <!-- Categorias (refinam a busca do rover) -->
-  <div class="categories">
-    @for (c of categories; track c.id) {
-      <button
-        class="cat"
-        [class.active]="category() === c.id && rover()"
-        (click)="selectCategory(c.id)"
-      >
-        <span class="cat-icon">{{ c.icon }}</span> {{ c.label }}
-      </button>
-    }
+  <!-- Filtro por ano (API) + ordenação (client-side) -->
+  <div class="controls">
+    <label class="control">
+      <span>Ano</span>
+      <select [value]="year()" (change)="onYearChange($any($event.target).value)">
+        <option value="">Todos os anos</option>
+        @for (y of years; track y) {
+          <option [value]="y">{{ y }}</option>
+        }
+      </select>
+    </label>
+    <label class="control">
+      <span>Ordenar</span>
+      <select [value]="sort()" (change)="onSortChange($any($event.target).value)">
+        @for (s of sortOptions; track s.id) {
+          <option [value]="s.id">{{ s.label }}</option>
+        }
+      </select>
+    </label>
   </div>
 
   @if (loading()) {
@@ -56,12 +64,12 @@
   } @else if (images().length === 0) {
     <div class="state glass">
       <p>🛰️ Nenhuma imagem encontrada.</p>
-      <p class="hint">Tente outro rover, outra categoria ou outro termo de busca.</p>
+      <p class="hint">Tente outro rover, outro ano ou outro termo de busca.</p>
     </div>
   } @else {
     <p class="count">{{ images().length }} imagem(ns)</p>
     <div class="grid">
-      @for (img of images(); track img.nasaId; let i = $index) {
+      @for (img of sortedImages(); track img.nasaId; let i = $index) {
         <button class="card" appInView [attr.data-theme]="i % 4" (click)="openLightbox(img)">
           <span class="card-body">
             <span class="card-inner">
