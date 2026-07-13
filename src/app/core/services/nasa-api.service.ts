@@ -55,10 +55,11 @@ export class NasaApiService {
    * Substitui a API Mars Rover Photos (arquivada em 2025) e também serve
    * de base para uma futura busca livre de mídia.
    */
-  searchImages(query: string): Observable<NasaImage[]> {
+  searchImages(query: string, page = 1): Observable<NasaImage[]> {
     const params = new HttpParams()
       .set('q', query)
-      .set('media_type', 'image');
+      .set('media_type', 'image')
+      .set('page', String(page));
     return this.http
       .get<ImageLibraryResponse>(`${this.imageBase}/search`, { params })
       .pipe(map((res) => this.mapImages(res)));

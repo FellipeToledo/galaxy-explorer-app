@@ -86,6 +86,19 @@
         </button>
       }
     </div>
+
+    <!-- Scroll infinito: sentinela + fallback manual -->
+    @if (hasMore()) {
+      <div class="load-more" appScrollEnd (scrolled)="loadMore()">
+        @if (loadingMore()) {
+          <div class="spinner"></div>
+        } @else {
+          <button class="btn" (click)="loadMore()">Carregar mais</button>
+        }
+      </div>
+    } @else {
+      <p class="end-note">✦ Fim dos resultados ✦</p>
+    }
   }
 </section>
 
