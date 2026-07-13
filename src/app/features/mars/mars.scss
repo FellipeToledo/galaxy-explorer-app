@@ -148,32 +148,13 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.control > span {
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 1.5px;
   color: var(--text-dim);
-}
-
-.control select {
-  font-family: var(--font-body);
-  font-size: 0.85rem;
-  font-weight: 600;
-  letter-spacing: normal;
-  text-transform: none;
-  color: var(--text);
-  background: var(--glass-bg-strong);
-  border: 1px solid var(--glass-border);
-  border-radius: 999px;
-  padding: 0.4rem 0.9rem;
-  cursor: pointer;
-  outline: none;
-  color-scheme: dark;
-  transition: border-color 0.2s ease;
-}
-
-.control select:hover,
-.control select:focus {
-  border-color: rgba(34, 211, 238, 0.55);
 }
 
 /* ── Grid de cards ────────────────────────────────────── */

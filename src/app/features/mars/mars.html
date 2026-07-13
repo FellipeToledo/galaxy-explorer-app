@@ -32,23 +32,26 @@
 
   <!-- Filtro por ano (API) + ordenação (client-side) -->
   <div class="controls">
-    <label class="control">
+    <div class="control">
       <span>Ano</span>
-      <select [value]="year()" (change)="onYearChange($any($event.target).value)">
-        <option value="">Todos os anos</option>
-        @for (y of years; track y) {
-          <option [value]="y">{{ y }}</option>
-        }
-      </select>
-    </label>
-    <label class="control">
+      <app-glass-select
+        [options]="yearOptions"
+        [value]="year()"
+        (valueChange)="onYearChange($event)"
+        minWidth="150px"
+        ariaLabel="Filtrar por ano"
+      />
+    </div>
+    <div class="control">
       <span>Ordenar</span>
-      <select [value]="sort()" (change)="onSortChange($any($event.target).value)">
-        @for (s of sortOptions; track s.id) {
-          <option [value]="s.id">{{ s.label }}</option>
-        }
-      </select>
-    </label>
+      <app-glass-select
+        [options]="sortOptions"
+        [value]="sort()"
+        (valueChange)="onSortChange($event)"
+        minWidth="160px"
+        ariaLabel="Ordenar imagens"
+      />
+    </div>
   </div>
 
   @if (loading()) {

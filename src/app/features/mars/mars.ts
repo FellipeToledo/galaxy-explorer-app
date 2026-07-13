@@ -10,6 +10,10 @@ import {
 } from '../../core/models/mars.model';
 import { InViewDirective } from '../../shared/in-view/in-view';
 import { ScrollEndDirective } from '../../shared/scroll-end/scroll-end';
+import {
+  GlassSelectComponent,
+  SelectOption,
+} from '../../shared/glass-select/glass-select';
 
 /** Tamanho de página padrão da NASA Image and Video Library. */
 const PAGE_SIZE = 100;
@@ -19,7 +23,7 @@ const FIRST_YEAR = 2004;
 @Component({
   selector: 'app-mars',
   standalone: true,
-  imports: [DatePipe, InViewDirective, ScrollEndDirective],
+  imports: [DatePipe, InViewDirective, ScrollEndDirective, GlassSelectComponent],
   templateUrl: './mars.html',
   styleUrl: './mars.scss',
 })
@@ -27,15 +31,21 @@ export class MarsComponent implements OnInit {
   private readonly api = inject(NasaApiService);
 
   protected readonly rovers = ROVERS;
-  protected readonly sortOptions = SORT_OPTIONS;
-  /** Anos disponíveis para o filtro (atual → 2004), descendente. */
-  protected readonly years = ((): string[] => {
+
+  /** Opções de ordenação para o dropdown custom. */
+  protected readonly sortOptions: SelectOption[] = SORT_OPTIONS.map((s) => ({
+    label: s.label,
+    value: s.id,
+  }));
+
+  /** Opções de ano (Todos + atual → 2004) para o dropdown custom. */
+  protected readonly yearOptions: SelectOption[] = (() => {
     const now = new Date().getFullYear();
-    const list: string[] = [];
+    const opts: SelectOption[] = [{ label: 'Todos os anos', value: '' }];
     for (let y = now; y >= FIRST_YEAR; y--) {
-      list.push(String(y));
+      opts.push({ label: String(y), value: String(y) });
     }
-    return list;
+    return opts;
   })();
 
   protected readonly images = signal<NasaImage[]>([]);
