@@ -24,6 +24,7 @@ import {
 } from '../../shared/glass-select/glass-select';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslateService } from '../../core/i18n/translate.service';
+import { ContentTranslatePipe } from '../../core/i18n/content-translate.pipe';
 
 /** Tamanho de página padrão da NASA Image and Video Library. */
 const PAGE_SIZE = 100;
@@ -63,6 +64,7 @@ const SEARCH_SUGGESTIONS: string[] = [
     ScrollEndDirective,
     GlassSelectComponent,
     TranslatePipe,
+    ContentTranslatePipe,
   ],
   templateUrl: './mars.html',
   styleUrl: './mars.scss',

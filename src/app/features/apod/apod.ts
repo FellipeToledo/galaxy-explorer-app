@@ -5,11 +5,12 @@ import { NasaApiService } from '../../core/services/nasa-api.service';
 import { Apod } from '../../core/models/apod.model';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslateService } from '../../core/i18n/translate.service';
+import { ContentTranslatePipe } from '../../core/i18n/content-translate.pipe';
 
 @Component({
   selector: 'app-apod',
   standalone: true,
-  imports: [DatePipe, TranslatePipe],
+  imports: [DatePipe, TranslatePipe, ContentTranslatePipe],
   templateUrl: './apod.html',
   styleUrl: './apod.scss',
 })
