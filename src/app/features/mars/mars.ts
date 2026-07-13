@@ -9,11 +9,15 @@ import {
   RoverName,
 } from '../../core/models/mars.model';
 import { InViewDirective } from '../../shared/in-view/in-view';
+import { ScrollEndDirective } from '../../shared/scroll-end/scroll-end';
+
+/** Tamanho de página padrão da NASA Image and Video Library. */
+const PAGE_SIZE = 100;
 
 @Component({
   selector: 'app-mars',
   standalone: true,
-  imports: [DatePipe, InViewDirective],
+  imports: [DatePipe, InViewDirective, ScrollEndDirective],
   templateUrl: './mars.html',
   styleUrl: './mars.scss',
 })
@@ -25,7 +29,12 @@ export class MarsComponent implements OnInit {
 
   protected readonly images = signal<NasaImage[]>([]);
   protected readonly loading = signal(true);
+  protected readonly loadingMore = signal(false);
+  protected readonly hasMore = signal(false);
   protected readonly error = signal<string | null>(null);
+
+  private currentTerm = '';
+  private page = 1;
 
   protected readonly rover = signal<RoverName | null>('perseverance');
   protected readonly category = signal<CategoryId>('all');
@@ -78,12 +87,16 @@ export class MarsComponent implements OnInit {
   }
 
   private search(term: string): void {
+    this.currentTerm = term;
+    this.page = 1;
     this.loading.set(true);
+    this.hasMore.set(false);
     this.error.set(null);
 
-    this.api.searchImages(term).subscribe({
+    this.api.searchImages(term, 1).subscribe({
       next: (imgs) => {
         this.images.set(imgs);
+        this.hasMore.set(imgs.length >= PAGE_SIZE);
         this.loading.set(false);
       },
       error: () => {
@@ -91,6 +104,41 @@ export class MarsComponent implements OnInit {
           'Não foi possível carregar as imagens. Verifique sua conexão e tente novamente.',
         );
         this.loading.set(false);
+      },
+    });
+  }
+
+  /** Carrega a próxima página e anexa aos resultados (scroll infinito). */
+  protected loadMore(): void {
+    if (
+      this.loading() ||
+      this.loadingMore() ||
+      !this.hasMore() ||
+      this.error()
+    ) {
+      return;
+    }
+    this.loadingMore.set(true);
+    const nextPage = this.page + 1;
+
+    this.api.searchImages(this.currentTerm, nextPage).subscribe({
+      next: (imgs) => {
+        if (imgs.length === 0) {
+          this.hasMore.set(false);
+        } else {
+          this.page = nextPage;
+          // Evita chaves duplicadas no @for (trackBy nasaId).
+          this.images.update((cur) => {
+            const seen = new Set(cur.map((i) => i.nasaId));
+            return [...cur, ...imgs.filter((i) => !seen.has(i.nasaId))];
+          });
+          this.hasMore.set(imgs.length >= PAGE_SIZE);
+        }
+        this.loadingMore.set(false);
+      },
+      error: () => {
+        // Mantém hasMore para permitir nova tentativa pelo botão/scroll.
+        this.loadingMore.set(false);
       },
     });
   }
