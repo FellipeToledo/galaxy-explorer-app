@@ -112,8 +112,8 @@
               </span>
               <span class="card-info">
                 <span class="card-brand">{{ 'mars.cardBrand' | t }}</span>
-                <span class="card-name">{{ img.title }}</span>
-                <span class="card-desc">{{ img.description || ('mars.cardFallbackDesc' | t) }}</span>
+                <span class="card-name">{{ img.title | ct }}</span>
+                <span class="card-desc">{{ img.description ? (img.description | ct) : ('mars.cardFallbackDesc' | t) }}</span>
                 <span class="card-meta">
                   <span class="card-date">
                     {{ img.dateCreated ? (img.dateCreated | date: 'mediumDate' : undefined : translate.lang()) : '' }}
@@ -149,14 +149,14 @@
     <figure (click)="$event.stopPropagation()">
       <img [src]="img.thumbUrl" [alt]="img.title" />
       <figcaption class="glass">
-        <strong>{{ img.title }}</strong>
+        <strong>{{ img.title | ct }}</strong>
         @if (img.dateCreated) {
           <span class="fc-date">{{ img.dateCreated | date: 'longDate' : undefined : translate.lang() }}
             @if (img.center) { · {{ img.center }} }
           </span>
         }
         @if (img.description) {
-          <span class="fc-desc">{{ img.description }}</span>
+          <span class="fc-desc">{{ img.description | ct }}</span>
         }
       </figcaption>
     </figure>

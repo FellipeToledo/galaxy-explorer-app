@@ -68,8 +68,8 @@
             <span class="copyright">© {{ item.copyright.trim() }}</span>
           }
         </div>
-        <h2 class="card-title">{{ item.title }}</h2>
-        <p class="explanation">{{ item.explanation }}</p>
+        <h2 class="card-title">{{ item.title | ct }}</h2>
+        <p class="explanation">{{ item.explanation | ct }}</p>
       </div>
     </article>
   }
