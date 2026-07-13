@@ -1,13 +1,15 @@
 <section class="apod container">
   <div class="head">
     <div>
-      <p class="eyebrow">NASA · Astronomy Picture of the Day</p>
-      <h1 class="title">A Foto <span class="gradient-text">do Cosmos</span></h1>
+      <p class="eyebrow">{{ 'apod.eyebrow' | t }}</p>
+      <h1 class="title">
+        {{ 'apod.title1' | t }} <span class="gradient-text">{{ 'apod.title2' | t }}</span>
+      </h1>
     </div>
 
     <div class="controls glass">
       <label class="date-field">
-        <span>Data</span>
+        <span>{{ 'apod.date' | t }}</span>
         <input
           type="date"
           [value]="selectedDate()"
@@ -15,8 +17,8 @@
           (change)="onDateChange($any($event.target).value)"
         />
       </label>
-      <button class="btn" (click)="randomDate()" title="Ir para uma data aleatória">
-        🎲 Surpreenda-me
+      <button class="btn" (click)="randomDate()" [title]="'apod.surpriseTitle' | t">
+        {{ 'apod.surprise' | t }}
       </button>
     </div>
   </div>
@@ -25,15 +27,15 @@
   @if (loading()) {
     <div class="state glass">
       <div class="spinner"></div>
-      <p>Percorrendo o universo…</p>
+      <p>{{ 'apod.loading' | t }}</p>
     </div>
   }
 
   <!-- Erro -->
-  @else if (error()) {
+  @else if (error(); as err) {
     <div class="state glass error">
-      <p>⚠️ {{ error() }}</p>
-      <button class="btn btn-primary" (click)="load()">Tentar novamente</button>
+      <p>⚠️ {{ err | t }}</p>
+      <button class="btn btn-primary" (click)="load()">{{ 'common.retry' | t }}</button>
     </div>
   }
 
@@ -45,7 +47,7 @@
           <img [src]="item.url" [alt]="item.title" loading="eager" />
           @if (item.hdurl) {
             <a class="hd-badge" [href]="item.hdurl" target="_blank" rel="noopener">
-              Ver em HD ↗
+              {{ 'apod.hd' | t }}
             </a>
           }
         } @else {
@@ -61,7 +63,7 @@
 
       <div class="info">
         <div class="meta">
-          <span class="date">{{ item.date | date: 'longDate' }}</span>
+          <span class="date">{{ item.date | date: 'longDate' : undefined : translate.lang() }}</span>
           @if (item.copyright) {
             <span class="copyright">© {{ item.copyright.trim() }}</span>
           }

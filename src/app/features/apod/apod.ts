@@ -3,20 +3,24 @@ import { DatePipe } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { NasaApiService } from '../../core/services/nasa-api.service';
 import { Apod } from '../../core/models/apod.model';
+import { TranslatePipe } from '../../core/i18n/translate.pipe';
+import { TranslateService } from '../../core/i18n/translate.service';
 
 @Component({
   selector: 'app-apod',
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, TranslatePipe],
   templateUrl: './apod.html',
   styleUrl: './apod.scss',
 })
 export class ApodComponent implements OnInit {
   private readonly api = inject(NasaApiService);
   private readonly sanitizer = inject(DomSanitizer);
+  protected readonly translate = inject(TranslateService);
 
   protected readonly apod = signal<Apod | null>(null);
   protected readonly loading = signal(true);
+  /** Chave de tradução do erro (ou null). */
   protected readonly error = signal<string | null>(null);
   protected readonly selectedDate = signal<string>(this.today());
 
@@ -48,9 +52,7 @@ export class ApodComponent implements OnInit {
         this.loading.set(false);
       },
       error: () => {
-        this.error.set(
-          'Não foi possível carregar a imagem. Verifique sua chave da API ou o limite de requisições.',
-        );
+        this.error.set('apod.error');
         this.loading.set(false);
       },
     });
