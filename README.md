@@ -28,8 +28,21 @@ cp public/config.example.json public/config.json
 ```
 
 O `AppConfigService` carrega esse `config.json` no boot (via `APP_INITIALIZER`)
-e sobrescreve os padrões do `environment`. Sem o arquivo (clone novo/produção),
-usa `DEMO_KEY`.
+e sobrescreve os padrões do `environment`. Sem o arquivo, usa `DEMO_KEY`.
+
+### Produção (Vercel) com sua chave
+
+Não versionamos a chave, então em produção ela vem de uma **env var** e o
+build gera o `config.json`:
+
+1. Na Vercel → **Settings → Environment Variables** → adicione
+   **`NASA_API_KEY`** (Production e/ou Preview) com a sua chave.
+2. Deploy. O script `prebuild` (`scripts/generate-config.mjs`) gera
+   `public/config.json` a partir da env var; o `ng build` o inclui no output.
+
+> A chave da NASA é usada no navegador, então continua visível no bundle de
+> produção (inerente a APIs client-side) — isso só faz produção usar **sua**
+> chave (limites maiores) sem colocá-la no git.
 
 > `DEMO_KEY` funciona para testes, mas tem limites baixos (30 req/h, 50/dia).
 > Chave gratuita em https://api.nasa.gov/.

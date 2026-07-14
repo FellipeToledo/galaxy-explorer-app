@@ -76,6 +76,8 @@ src/app/
   `public/config.json` (**gitignored**; ex.: `public/config.example.json`).
   A chave do dev vai no `config.json` — **NUNCA editar `environment.ts` nem
   commitar chaves**. Serviços leem de `AppConfigService`, não do environment.
+  **Produção (Vercel)**: env var `NASA_API_KEY` → o script `prebuild`
+  (`scripts/generate-config.mjs`) gera o `config.json` no build.
 - **i18n**: solução própria leve. UI via dicionários (`translations.ts`,
   pt-BR default + en-US) + pipe impuro `t`; datas com locale dinâmico
   (`| date: 'longDate' : undefined : translate.lang()`). Conteúdo dinâmico da
