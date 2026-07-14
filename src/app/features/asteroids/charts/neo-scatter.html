@@ -1,0 +1,78 @@
+<figure class="chart">
+  <figcaption>
+    <span class="chart-title">{{ 'neo.chartScatter.title' | t }}</span>
+    <span class="chart-sub">{{ 'neo.chartScatter.sub' | t }}</span>
+  </figcaption>
+
+  <ul class="legend">
+    <li><span class="swatch safe" aria-hidden="true"></span>{{ 'neo.legend.safe' | t }}</li>
+    <li><span class="swatch hazard" aria-hidden="true"></span>{{ 'neo.legend.hazard' | t }}</li>
+  </ul>
+
+  <div class="plot">
+    <svg [attr.viewBox]="'0 0 ' + viewW + ' ' + viewH" role="img" [attr.aria-label]="'neo.chartScatter.aria' | t">
+      @for (tick of yTicks(); track tick.label) {
+        <line class="grid" [attr.x1]="plotLeft" [attr.y1]="tick.y" [attr.x2]="plotRight" [attr.y2]="tick.y" />
+        <text class="tick" [attr.x]="plotLeft - 8" [attr.y]="tick.y + 4" text-anchor="end">{{ tick.label }}</text>
+      }
+      <line class="axis" [attr.x1]="plotLeft" [attr.y1]="plotBottom" [attr.x2]="plotRight" [attr.y2]="plotBottom" />
+
+      @for (tick of xTicks(); track tick.label) {
+        <text class="tick" [attr.x]="tick.x" [attr.y]="plotBottom + 20" text-anchor="middle">{{ tick.label }}</text>
+      }
+      <text class="axis-title" [attr.x]="(plotLeft + plotRight) / 2" [attr.y]="viewH - 6" text-anchor="middle">
+        {{ 'neo.chartScatter.xAxis' | t }}
+      </text>
+
+      @for (dot of dots(); track dot.neo.id) {
+        <g>
+          <!-- Anel de 2px na cor da superfície: os pontos se sobrepõem muito -->
+          <circle
+            [attr.cx]="dot.cx"
+            [attr.cy]="dot.cy"
+            [attr.r]="dotR"
+            [class.hazard]="dot.neo.hazardous"
+            [class.safe]="!dot.neo.hazardous"
+            [class.dim]="hovered() && hovered()?.neo?.id !== dot.neo.id"
+          />
+          @if (dot.label) {
+            <text class="dot-label" [attr.x]="dot.cx + 10" [attr.y]="dot.cy + 4">{{ dot.label }}</text>
+          }
+          <!-- Alvo de teclado (o ponteiro é tratado pela camada abaixo) -->
+          <circle
+            class="hit key-hit"
+            tabindex="0"
+            [attr.cx]="dot.cx"
+            [attr.cy]="dot.cy"
+            [attr.r]="hitR"
+            (focus)="hover(dot)"
+            (blur)="hover(null)"
+          />
+        </g>
+      }
+
+      <!-- Camada de ponto-mais-próximo: o plot inteiro é o alvo do ponteiro -->
+      <rect
+        class="hit nearest"
+        [attr.x]="plotLeft"
+        y="18"
+        [attr.width]="plotRight - plotLeft"
+        [attr.height]="plotBottom - 18"
+        (mousemove)="onPointerMove($event)"
+        (mouseleave)="hover(null)"
+      />
+    </svg>
+
+    @if (hovered(); as dot) {
+      <div class="tooltip" [style.left.%]="tipLeft()" [style.top.%]="tipTop()" role="status">
+        <strong>{{ dot.neo.name }}</strong>
+        <span>{{ 'neo.tooltip.diameter' | t: { value: (dot.neo.diameterAvg | number: '1.0-0') ?? '' } }}</span>
+        <span>{{ 'neo.tooltip.distance' | t: { value: (dot.neo.missLunar | number: '1.1-1') ?? '' } }}</span>
+        <span>{{ 'neo.tooltip.speed' | t: { value: (dot.neo.velocityKph | number: '1.0-0') ?? '' } }}</span>
+        @if (dot.neo.hazardous) {
+          <span class="tt-hazard">⚠ {{ 'neo.legend.hazard' | t }}</span>
+        }
+      </div>
+    }
+  </div>
+</figure>
