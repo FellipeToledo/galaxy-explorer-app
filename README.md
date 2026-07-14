@@ -65,7 +65,21 @@ npm run dev        # sobe o Angular (com proxy /api) + o servidor de tradução
 
 - Sem chave, o proxy devolve o texto original (o app continua funcionando).
 - Para testar o fluxo sem chave: `TRANSLATE_MOCK=1 npm run server`.
-- Trocar de provedor (Google/LibreTranslate) = ajustar apenas `server/index.mjs`.
+- Trocar de provedor (Google/LibreTranslate) = ajustar apenas
+  `server/translate-core.mjs` (compartilhado por dev e serverless).
+
+### Deploy na Vercel (serverless)
+
+O mesmo proxy roda como **função serverless** em `api/translate.mjs` (e
+`api/health.mjs`), reaproveitando `server/translate-core.mjs`. O `vercel.json`
+já configura o build do Angular, o diretório de saída e o SPA fallback.
+
+1. Importe o repositório na Vercel (framework: Other; o `vercel.json` cuida do resto).
+2. Em **Settings → Environment Variables**, adicione `DEEPL_API_KEY`.
+3. Deploy. O front-end chama `/api/translate` (mesma origem) → função → DeepL.
+
+> O `server/` (Node local) e o `api/` (Vercel) compartilham a lógica, então
+> não há duplicação.
 
 ## 🧱 Arquitetura
 
