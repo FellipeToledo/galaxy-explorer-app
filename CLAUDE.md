@@ -56,8 +56,9 @@ src/app/
 │   ├── apod/               # Foto do Dia (imagem/vídeo, data, aleatório)
 │   ├── mars/               # galeria (Image Library), filtros, autocomplete,
 │   │                       # scroll infinito, lightbox, cards neon
-│   └── asteroids/          # dashboard NeoWs: stat tiles + 2 gráficos + tabela
-│       └── charts/         # neo-bars, neo-scatter (SVG próprio) + charts.scss
+│   ├── asteroids/          # dashboard NeoWs: stat tiles + 2 gráficos + tabela
+│   │   └── charts/         # neo-bars, neo-scatter (SVG próprio) + charts.scss
+│   └── earth/              # EPIC: disco da Terra + slider temporal (play/pause)
 ├── shared/
 │   ├── starfield/          # fundo de estrelas em <canvas> (fora da zona)
 │   ├── navbar/             # navegação + seletor de idioma
@@ -65,7 +66,7 @@ src/app/
 │   ├── in-view/            # IntersectionObserver → classe .in-view
 │   └── scroll-end/         # IntersectionObserver → output scrolled (infinite)
 └── app.routes.ts           # rotas lazy: '' = APOD, 'mars' = Marte,
-                            # 'asteroids' = Asteroides
+                            # 'asteroids' = Asteroides, 'earth' = Terra
 ```
 
 ## Decisões técnicas (não re-litigar)
@@ -100,6 +101,14 @@ src/app/
   as aproximações de cada objeto** → o serviço casa a aproximação com o dia do
   grupo e achata tudo em `Neo[]`. Datas montadas em fuso **local**
   (`toISOString()` usaria UTC e pularia um dia).
+- **Terra (EPIC)**: `/EPIC/api/natural[/date/YYYY-MM-DD]` + `/available` (datas).
+  **As imagens do arquivo também exigem a chave** e a URL é derivada da data:
+  `/EPIC/archive/natural/YYYY/MM/DD/{png|jpg}/<image>.{png|jpg}?api_key=…`.
+  Exibimos o **JPG** (2048²) e o PNG vira link "alta resolução" — animar ~20
+  PNGs de ~2 MB não é viável. `date` vem como `"YYYY-MM-DD HH:mm:ss"` (UTC, e
+  **não é ISO válido** em todo navegador) → o serviço também entrega `dateIso`.
+  Os quadros são pré-carregados antes do play (senão o 1º ciclo pisca), e a
+  flutuação CSS **para durante o play** (dois movimentos somados enjoam).
 - **Gráficos (skill `dataviz`)**: SVG próprio, sem lib. As cores das marcas
   (`charts.scss`: `--mark-safe #0891b2`, `--mark-hazard #d97706`) foram
   **validadas** por `scripts/validate_palette.js` do skill contra a superfície
@@ -115,8 +124,6 @@ src/app/
 ## Backlog / TODOs (levantados na conversa)
 
 Novas seções:
-- [ ] **🌍 EPIC** — imagens de disco completo da Terra (`/EPIC/api/natural`),
-      galeria com slider temporal ("Terra flutuando").
 - [ ] **🎨 Busca de mídia** — extrair a busca livre do Marte para uma seção
       própria (reusar cards + autocomplete + scroll infinito).
 
@@ -136,7 +143,12 @@ Melhorias no que já existe:
       aparecer texto livre na seção.
 - [ ] **Períodos além de 7 dias** nos Asteroides — exigiria encadear chamadas ao
       feed (limite da API) ou usar `/neo/browse`; hoje o seletor tem
-      hoje / próximos 7 / últimos 7.
+      hoje / próximos 7 / últimos 7. (Pedido explícito do usuário para ficar no
+      backlog, não implementar agora.)
+- [ ] **Datas do EPIC além das 60 mais recentes** — o `/available` traz milhares
+      de datas e o seletor corta em 60 (`MAX_DATES`). Avaliar um date picker
+      com as datas válidas em vez da lista.
+- [ ] **Vídeo/GIF do dia no EPIC** — exportar a sequência animada do dia.
 
 Infra:
 - [ ] **Cache de tradução durável** — hoje é em memória (some em cold start
@@ -150,6 +162,8 @@ glass-select, autocomplete, cards neon, deploy Vercel + serverless,
 **☄️ Asteroides (NeoWs)**: rota `/asteroids`, seletor de período, stat tiles
 (total/perigosos/mais próximo/mais rápido), colunas empilhadas por dia,
 dispersão distância×tamanho e tabela — tudo i18n nos 2 idiomas.
+**🌍 Terra (EPIC)**: rota `/earth`, seletor de data, disco em JPG com halo,
+slider temporal com play/pause/anterior/próximo e pré-carregamento dos quadros.
 
 ## Histórico essencial (para contexto)
 
@@ -160,4 +174,5 @@ alturas uniformes → lightbox fix → scroll infinito → filtros fiéis
 tradução de conteúdo (browser) → backend DeepL → serverless Vercel →
 PR #19 mergeado, produção OK (usuário confirmou "tudo perfeito e funcional") →
 chave NASA em `config.json` de runtime (PR #21) → seção Asteroides (NeoWs) com
-gráficos SVG próprios seguindo a skill `dataviz`.
+gráficos SVG próprios seguindo a skill `dataviz` (PR #23) → seção Terra (EPIC)
+com slider temporal.
