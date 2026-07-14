@@ -4,13 +4,15 @@
  * api/translate.mjs — ambos usam server/translate-core.mjs.
  *
  * Expõe POST /api/translate e GET /api/health. Config via env
- * (DEEPL_API_KEY, DEEPL_API_URL, TRANSLATE_MOCK, PORT). Veja translate-core.mjs.
+ * (DEEPL_API_KEY, DEEPL_API_URL, TRANSLATE_MOCK, PORT, e o par KV_REST_API_*
+ * do cache durável). Veja translate-core.mjs.
  */
 import { createServer } from 'node:http';
 import {
   translateBatch,
   providerName,
   cacheSize,
+  cacheBackend,
 } from './translate-core.mjs';
 
 const PORT = Number(process.env.PORT) || 3001;
@@ -34,7 +36,12 @@ const server = createServer((req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
 
   if (req.method === 'GET' && url.pathname === '/api/health') {
-    sendJson(res, 200, { ok: true, provider: providerName(), cached: cacheSize() });
+    sendJson(res, 200, {
+      ok: true,
+      provider: providerName(),
+      cached: cacheSize(),
+      cache: cacheBackend(),
+    });
     return;
   }
 
