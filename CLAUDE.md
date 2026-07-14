@@ -112,6 +112,36 @@ Escopo acordado (recomendação aceita pelo usuário):
   pipes `t`/`ct`, tema glass.
 - Entregar via PR para main (deploy automático Vercel).
 
+## Backlog / TODOs (levantados na conversa)
+
+Novas seções (após Asteroides):
+- [ ] **🌍 EPIC** — imagens de disco completo da Terra (`/EPIC/api/natural`),
+      galeria com slider temporal ("Terra flutuando").
+- [ ] **🎨 Busca de mídia** — extrair a busca livre do Marte para uma seção
+      própria (reusar cards + autocomplete + scroll infinito).
+
+Melhorias no que já existe:
+- [ ] **Título da aba (rota) i18n** — hoje fixo em pt-BR; criar um
+      `TitleStrategy` que troca com o idioma.
+- [ ] **Autocomplete dinâmico** — sugestões vindas da API em tempo real
+      (com debounce) em vez da lista curada atual.
+- [ ] **Alta resolução** no lightbox — usar o asset manifest da Image Library
+      (`collection.json`) para a imagem full-res; hoje usa o thumbnail.
+- [ ] **Filtro por câmera** no Marte (estava no plano inicial da API antiga;
+      reavaliar viabilidade com a Image Library).
+- [ ] **Indicador "traduzindo…"** enquanto o DeepL/pacote processa o conteúdo.
+- [ ] **Vídeos** (media_type=video) na busca de mídia.
+
+Infra:
+- [ ] **Cache de tradução durável** — hoje é em memória (some em cold start
+      do serverless). Avaliar Vercel KV/Redis no `translate-core.mjs`.
+- [ ] Confirmar `DEEPL_API_KEY` também no ambiente **Preview** (se quiser que
+      previews traduzam) — hoje garantida em Production.
+
+Concluídos (referência): i18n UI (pt-BR/en), tradução de conteúdo (DeepL +
+fallback navegador/original), scroll infinito, filtros fiéis (ano+ordenação),
+glass-select, autocomplete, cards neon, deploy Vercel + serverless.
+
 ## Histórico essencial (para contexto)
 
 MVP: APOD + Marte → API de Marte arquivada → migração p/ Image Library →
