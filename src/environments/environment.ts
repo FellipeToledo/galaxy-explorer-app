@@ -1,12 +1,18 @@
 /**
- * Configuração de ambiente do Galaxy Explorer.
+ * Configuração de ambiente do Galaxy Explorer (VALORES PADRÃO / FALLBACK).
  *
- * A chave da API da NASA é obtida gratuitamente em https://api.nasa.gov/
- * Substitua o valor abaixo pela sua chave. `DEMO_KEY` funciona para testes,
- * porém tem limites de requisição bem baixos (30/hora, 50/dia).
+ * NÃO edite este arquivo para colocar sua chave — ele é versionado e causaria
+ * conflito no `git pull`. Em vez disso, crie `public/config.json` (gitignored)
+ * a partir de `public/config.example.json` e coloque sua chave lá:
  *
- * ⚠️ Por ser um app puramente front-end, a chave fica visível no bundle.
- * Para produção, considere um proxy/backend que injete a chave server-side.
+ *   { "nasaApiKey": "SUA_CHAVE" }
+ *
+ * O AppConfigService carrega esse arquivo no boot e sobrescreve os padrões
+ * abaixo. Sem o arquivo (clone novo/produção), usa `DEMO_KEY` (limites baixos:
+ * 30/h, 50/dia). Chave gratuita em https://api.nasa.gov/.
+ *
+ * ⚠️ Sendo front-end, a chave fica visível no bundle; o config.json apenas
+ * evita conflitos/commit acidental — não a torna secreta no cliente.
  */
 export const environment = {
   production: false,
