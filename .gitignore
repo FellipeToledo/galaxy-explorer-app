@@ -15,6 +15,9 @@ yarn-error.log
 .env
 .env.local
 
+# Config de runtime com a chave da NASA de cada dev (não versionar)
+/public/config.json
+
 # IDEs and editors
 .idea/
 .project

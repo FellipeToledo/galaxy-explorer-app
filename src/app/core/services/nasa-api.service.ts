@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { environment } from '../../../environments/environment';
+import { AppConfigService } from '../config/app-config.service';
 import { Apod } from '../models/apod.model';
 import { NasaImage } from '../models/mars.model';
 
@@ -29,11 +29,15 @@ interface ImageLibraryResponse {
 @Injectable({ providedIn: 'root' })
 export class NasaApiService {
   private readonly http = inject(HttpClient);
-  private readonly base = environment.nasaApiBase;
+  private readonly appConfig = inject(AppConfigService);
   private readonly imageBase = 'https://images-api.nasa.gov';
 
+  private get base(): string {
+    return this.appConfig.nasaApiBase;
+  }
+
   private withKey(params: Record<string, string | number> = {}): HttpParams {
-    let httpParams = new HttpParams().set('api_key', environment.nasaApiKey);
+    let httpParams = new HttpParams().set('api_key', this.appConfig.nasaApiKey);
     for (const [key, value] of Object.entries(params)) {
       httpParams = httpParams.set(key, String(value));
     }

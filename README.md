@@ -16,22 +16,27 @@ glassmorphism e acentos violeta/ciano em um visual de espaço profundo.
 
 ## 🔑 Chave da API
 
-O app usa as [APIs abertas da NASA](https://api.nasa.gov/). Obtenha sua chave
-gratuita e substitua o valor em `src/environments/environment.ts`
-(e `environment.prod.ts` para produção):
+O app usa as [APIs abertas da NASA](https://api.nasa.gov/). Sua chave fica num
+arquivo local **não versionado** (`public/config.json`) — assim ela **nunca
+conflita no `git pull`** nem corre risco de ser commitada. **Não edite**
+`environment.ts` para colocar a chave.
 
-```ts
-export const environment = {
-  production: false,
-  nasaApiKey: 'SUA_CHAVE_AQUI', // troque DEMO_KEY pela sua
-  nasaApiBase: 'https://api.nasa.gov',
-};
+```bash
+cp public/config.example.json public/config.json
+# edite public/config.json e coloque sua chave:
+#   { "nasaApiKey": "SUA_CHAVE" }
 ```
 
+O `AppConfigService` carrega esse `config.json` no boot (via `APP_INITIALIZER`)
+e sobrescreve os padrões do `environment`. Sem o arquivo (clone novo/produção),
+usa `DEMO_KEY`.
+
 > `DEMO_KEY` funciona para testes, mas tem limites baixos (30 req/h, 50/dia).
+> Chave gratuita em https://api.nasa.gov/.
 >
-> ⚠️ Por ser um app front-end, a chave fica visível no bundle. Para produção,
-> considere um proxy/backend que injete a chave server-side.
+> ⚠️ Sendo front-end, a chave fica visível no bundle — o `config.json` evita
+> conflitos/commit acidental, mas não a torna secreta no cliente. Para
+> esconder de verdade, seria preciso um proxy server-side (como o de tradução).
 
 ## 🚀 Como rodar
 

@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { TranslateService } from './translate.service';
-import { environment } from '../../../environments/environment';
+import { AppConfigService } from '../config/app-config.service';
 
 /**
  * Traduz textos dinâmicos vindos da API da NASA (títulos, descrições,
@@ -20,8 +20,9 @@ import { environment } from '../../../environments/environment';
 export class ContentTranslateService {
   private readonly ui = inject(TranslateService);
   private readonly http = inject(HttpClient);
+  private readonly appConfig = inject(AppConfigService);
 
-  private readonly apiUrl = environment.translateApiUrl;
+  private readonly apiUrl = this.appConfig.translateApiUrl;
   /** Fica true se o backend falhar → passa a usar a API do navegador. */
   private backendDown = false;
 

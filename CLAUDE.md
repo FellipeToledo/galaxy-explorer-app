@@ -71,8 +71,11 @@ src/app/
   a **NASA Image and Video Library** (`images-api.nasa.gov`, sem chave).
   Filtros fiéis: `year_start/year_end` (a API **não tem sort** → ordenação por
   data é client-side via computed `sortedImages`; página = 100 itens).
-- **Chave NASA**: `environment.nasaApiKey` (placeholder DEMO_KEY; o usuário
-  tem chave própria localmente — não commitar chaves).
+- **Chave NASA / config runtime**: lida via `AppConfigService` (carregado no
+  boot por `APP_INITIALIZER`), com padrões do `environment` sobrescritos por
+  `public/config.json` (**gitignored**; ex.: `public/config.example.json`).
+  A chave do dev vai no `config.json` — **NUNCA editar `environment.ts` nem
+  commitar chaves**. Serviços leem de `AppConfigService`, não do environment.
 - **i18n**: solução própria leve. UI via dicionários (`translations.ts`,
   pt-BR default + en-US) + pipe impuro `t`; datas com locale dinâmico
   (`| date: 'longDate' : undefined : translate.lang()`). Conteúdo dinâmico da
