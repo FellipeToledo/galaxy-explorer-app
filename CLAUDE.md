@@ -15,9 +15,10 @@ npm run build    # build de produção (dist/galaxy-explorer/browser)
 
 ## Fluxo de trabalho (IMPORTANTE)
 
-- Branch de trabalho: `claude/nasa-api-angular-galaxy-98v7la`. **Nunca** dar
-  push direto na `main` — a produção (Vercel, git-connected) deploya da main;
-  entregar via Pull Request para o usuário mergear.
+- Trabalhe numa **branch de trabalho dedicada** (verifique/crie uma branch
+  `claude/…`; o nome varia por sessão — **não assuma uma branch fixa**).
+  **Nunca** dar push direto na `main` — a produção (Vercel, git-connected)
+  deploya da main; entregar via Pull Request para o usuário mergear.
 - Commits: mensagens em pt-BR, estilo conventional (`feat(mars): …`), com
   identidade `Claude <noreply@anthropic.com>` (`git config` local já ajustado).
 - **A rede deste container bloqueia TODAS as APIs externas** (api.nasa.gov,
@@ -39,7 +40,7 @@ npm run build    # build de produção (dist/galaxy-explorer/browser)
 
 ## Arquitetura
 
-```
+```text
 server/translate-core.mjs   # núcleo de tradução (DeepL + cache), compartilhado
 server/index.mjs            # proxy local de dev (Node puro, sem deps)
 api/translate.mjs, health.mjs # funções serverless Vercel (usam o núcleo)
