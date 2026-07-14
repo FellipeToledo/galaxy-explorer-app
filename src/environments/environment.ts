@@ -12,4 +12,10 @@ export const environment = {
   production: false,
   nasaApiKey: 'DEMO_KEY',
   nasaApiBase: 'https://api.nasa.gov',
+  /**
+   * Proxy de tradução de conteúdo. Se definido, o app traduz textos da API
+   * via este endpoint (backend + DeepL). Vazio → usa a Translator API do
+   * navegador (on-device) como fallback. Veja server/index.mjs.
+   */
+  translateApiUrl: '/api/translate',
 };

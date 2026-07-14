@@ -11,6 +11,10 @@
 npm-debug.log
 yarn-error.log
 
+# Env (segredos: chaves de API)
+.env
+.env.local
+
 # IDEs and editors
 .idea/
 .project

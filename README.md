@@ -37,15 +37,43 @@ export const environment = {
 
 ```bash
 npm install
-npm start          # dev server em http://localhost:4200
+npm start          # só o front-end (http://localhost:4200)
 npm run build      # build de produção em dist/
+npm run dev        # front-end + proxy de tradução juntos (recomendado)
 ```
+
+## 🌍 Idiomas e tradução
+
+- UI multi-idioma (**pt-BR** padrão + **English**), com troca em tempo real
+  pelo seletor no navbar (persiste em `localStorage`).
+- O **conteúdo da NASA** (títulos/descrições) é traduzido sob demanda, com
+  cache, em camadas:
+  1. **Backend proxy → DeepL** (recomendado, funciona em qualquer navegador);
+  2. fallback para a **Translator API on-device** do navegador (Chromium);
+  3. fallback para o **texto original**.
+
+### Proxy de tradução (backend + chave)
+
+O proxy fica em `server/index.mjs` (Node puro, sem dependências) e esconde a
+chave server-side.
+
+```bash
+cp .env.example .env
+# edite .env e preencha DEEPL_API_KEY (free tier: https://www.deepl.com/pro-api)
+npm run dev        # sobe o Angular (com proxy /api) + o servidor de tradução
+```
+
+- Sem chave, o proxy devolve o texto original (o app continua funcionando).
+- Para testar o fluxo sem chave: `TRANSLATE_MOCK=1 npm run server`.
+- Trocar de provedor (Google/LibreTranslate) = ajustar apenas `server/index.mjs`.
 
 ## 🧱 Arquitetura
 
 ```
+server/index.mjs           # proxy de tradução (DeepL) — chave server-side
 src/app/
 ├── core/
+│   ├── i18n/              # TranslateService, pipes t/ct, dicionários
 │   ├── models/            # interfaces (APOD, Mars)
 │   └── services/          # NasaApiService (HttpClient central)
 ├── features/
@@ -53,7 +81,9 @@ src/app/
 │   └── mars/              # galeria de Marte
 ├── shared/
 │   ├── starfield/         # fundo de estrelas em <canvas>
-│   └── navbar/            # navegação
+│   ├── navbar/            # navegação + seletor de idioma
+│   ├── glass-select/      # dropdown "glass" reutilizável
+│   ├── in-view/ scroll-end/ # diretivas (IntersectionObserver)
 └── app.{ts,html,scss}     # shell + rotas
 ```
 
