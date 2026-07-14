@@ -1,0 +1,192 @@
+/* Estilos compartilhados pelos gráficos SVG da seção Asteroides.
+   Cores das marcas validadas para a superfície escura (banda de luminosidade,
+   piso de croma, separação sob daltonismo e contraste) — não trocar por
+   --cyan/--amber, que são claros demais e reprovam a checagem. */
+:host {
+  --mark-safe: #0891b2;
+  --mark-hazard: #d97706;
+  /* Superfície: cor dos vãos de 2px e dos anéis dos pontos. */
+  --chart-surface: #0d0726;
+  display: block;
+}
+
+.chart {
+  margin: 0;
+  padding: 1.1rem 1.25rem 1.25rem;
+}
+
+figcaption {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-bottom: 0.5rem;
+}
+
+.chart-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.chart-sub {
+  font-size: 0.76rem;
+  color: var(--text-dim);
+}
+
+/* ── Legenda (identidade nunca só pela cor) ───────────── */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  list-style: none;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.swatch.safe {
+  background: var(--mark-safe);
+}
+
+.swatch.hazard {
+  background: var(--mark-hazard);
+}
+
+/* ── Área do gráfico ──────────────────────────────────── */
+.plot {
+  position: relative;
+}
+
+svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* Grade/eixos: hairline sólida e recessiva */
+.grid,
+.axis {
+  stroke: rgba(255, 255, 255, 0.09);
+  stroke-width: 1;
+}
+
+.axis {
+  stroke: rgba(255, 255, 255, 0.18);
+}
+
+/* Texto usa tokens de texto — nunca a cor da série */
+.tick {
+  fill: var(--text-dim);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.axis-title,
+.dot-label,
+.cap-label {
+  fill: var(--text-muted);
+  font-size: 10px;
+}
+
+.cap-label {
+  fill: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.dot-label {
+  font-size: 9.5px;
+}
+
+/* Marcas */
+path.safe,
+circle.safe {
+  fill: var(--mark-safe);
+}
+
+path.hazard,
+circle.hazard {
+  fill: var(--mark-hazard);
+}
+
+circle.safe,
+circle.hazard {
+  /* Anel de 2px na cor da superfície (pontos se sobrepõem) */
+  stroke: var(--chart-surface);
+  stroke-width: 2;
+  transition: opacity 0.15s ease;
+}
+
+circle.dim {
+  opacity: 0.35;
+}
+
+/* Alvos de hover/foco: invisíveis e maiores que a marca */
+.hit {
+  fill: transparent;
+  cursor: pointer;
+  outline: none;
+}
+
+.hit:focus-visible {
+  stroke: var(--cyan);
+  stroke-width: 2;
+}
+
+/* Alvo só de teclado: não intercepta o ponteiro, que é da camada .nearest */
+.key-hit {
+  pointer-events: none;
+}
+
+.key-hit:focus-visible {
+  pointer-events: auto;
+}
+
+.nearest {
+  cursor: crosshair;
+}
+
+/* ── Tooltip (realça; nunca é o único caminho para o valor:
+      a tabela da página traz todos) ────────────────────── */
+.tooltip {
+  position: absolute;
+  z-index: 5;
+  transform: translate(-50%, calc(-100% - 10px));
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  white-space: nowrap;
+  padding: 0.5rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: rgba(13, 7, 38, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.tooltip strong {
+  color: var(--text);
+  font-size: 0.8rem;
+}
+
+.tt-hazard {
+  color: var(--amber);
+}

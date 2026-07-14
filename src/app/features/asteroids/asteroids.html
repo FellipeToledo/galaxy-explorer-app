@@ -1,0 +1,124 @@
+<section class="asteroids container">
+  <div class="head">
+    <p class="eyebrow">{{ 'neo.eyebrow' | t }}</p>
+    <h1 class="title">
+      {{ 'neo.title1' | t }} <span class="gradient-text">{{ 'neo.title2' | t }}</span>
+    </h1>
+    <p class="subtitle">{{ 'neo.subtitle' | t }}</p>
+  </div>
+
+  <!-- Um único filtro no topo: alimenta tiles, gráficos e tabela -->
+  <div class="controls">
+    <div class="control">
+      <span>{{ 'neo.period' | t }}</span>
+      <app-glass-select
+        [options]="rangeOptions()"
+        [value]="range()"
+        (valueChange)="onRangeChange($event)"
+        minWidth="180px"
+        [ariaLabel]="'neo.periodAria' | t"
+      />
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="state glass">
+      <div class="spinner"></div>
+      <p>{{ 'neo.loading' | t }}</p>
+    </div>
+  } @else if (error(); as err) {
+    <div class="state glass error">
+      <p>⚠️ {{ err | t }}</p>
+      <button class="btn btn-primary" (click)="retry()">{{ 'common.retry' | t }}</button>
+    </div>
+  } @else if (total() === 0) {
+    <div class="state glass">
+      <p>☄️ {{ 'neo.empty' | t }}</p>
+      <p class="hint">{{ 'neo.emptyHint' | t }}</p>
+    </div>
+  } @else {
+    <!-- Número-herói + tiles de apoio -->
+    <div class="tiles">
+      <div class="tile hero glass">
+        <span class="tile-label">{{ 'neo.stat.total' | t }}</span>
+        <span class="hero-value">{{ total() }}</span>
+        <span class="tile-note">{{ 'neo.range.' + range() | t }}</span>
+      </div>
+
+      <div class="tile glass">
+        <span class="tile-label">{{ 'neo.stat.hazardous' | t }}</span>
+        <span class="tile-value hazard">{{ hazardousCount() }}</span>
+        <span class="tile-note">{{ 'neo.stat.hazardousNote' | t }}</span>
+      </div>
+
+      @if (closest(); as neo) {
+        <div class="tile glass">
+          <span class="tile-label">{{ 'neo.stat.closest' | t }}</span>
+          <span class="tile-value">{{ neo.missLunar | number: '1.1-1' }} <small>{{ 'neo.unit.lunar' | t }}</small></span>
+          <span class="tile-note">{{ neo.name }}</span>
+        </div>
+      }
+
+      @if (fastest(); as neo) {
+        <div class="tile glass">
+          <span class="tile-label">{{ 'neo.stat.fastest' | t }}</span>
+          <span class="tile-value">{{ neo.velocityKph | number: '1.0-0' }} <small>km/h</small></span>
+          <span class="tile-note">{{ neo.name }}</span>
+        </div>
+      }
+    </div>
+
+    <div class="charts">
+      <app-neo-bars class="glass" [data]="dayCounts()" />
+      <app-neo-scatter class="glass" [data]="neos()" />
+    </div>
+
+    <!-- Tabela: a leitura acessível dos mesmos dados dos gráficos -->
+    <div class="table-card glass">
+      <h2 class="table-title">{{ 'neo.table.title' | t }}</h2>
+      <div class="table-scroll">
+        <table>
+          <caption class="sr-only">{{ 'neo.table.caption' | t }}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{{ 'neo.table.name' | t }}</th>
+              <th scope="col">{{ 'neo.table.date' | t }}</th>
+              <th scope="col" class="num">{{ 'neo.table.diameter' | t }}</th>
+              <th scope="col" class="num">{{ 'neo.table.distance' | t }}</th>
+              <th scope="col" class="num">{{ 'neo.table.speed' | t }}</th>
+              <th scope="col">{{ 'neo.table.status' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (neo of neos(); track neo.id) {
+              <tr [class.is-hazard]="neo.hazardous">
+                <th scope="row">
+                  @if (neo.jplUrl) {
+                    <a [href]="neo.jplUrl" target="_blank" rel="noopener">{{ neo.name }} ↗</a>
+                  } @else {
+                    {{ neo.name }}
+                  }
+                </th>
+                <td>{{ neo.approachDate | date: 'shortDate' : 'UTC' : translate.lang() }}</td>
+                <td class="num">{{ neo.diameterMin | number: '1.0-0' }}–{{ neo.diameterMax | number: '1.0-0' }} m</td>
+                <td class="num">
+                  {{ neo.missLunar | number: '1.1-1' }} {{ 'neo.unit.lunar' | t }}
+                  <small>({{ neo.missKm | number: '1.0-0' }} km)</small>
+                </td>
+                <td class="num">{{ neo.velocityKph | number: '1.0-0' }} km/h</td>
+                <td>
+                  @if (neo.hazardous) {
+                    <span class="tag hazard">⚠ {{ 'neo.legend.hazard' | t }}</span>
+                  } @else {
+                    <span class="tag">{{ 'neo.legend.safe' | t }}</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="source">{{ 'neo.table.source' | t }}</p>
+    </div>
+  }
+</section>

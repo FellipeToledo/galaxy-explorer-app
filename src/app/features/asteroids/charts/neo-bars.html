@@ -1,0 +1,59 @@
+<figure class="chart">
+  <figcaption>
+    <span class="chart-title">{{ 'neo.chartBars.title' | t }}</span>
+    <span class="chart-sub">{{ 'neo.chartBars.sub' | t }}</span>
+  </figcaption>
+
+  <ul class="legend">
+    <li><span class="swatch safe" aria-hidden="true"></span>{{ 'neo.legend.safe' | t }}</li>
+    <li><span class="swatch hazard" aria-hidden="true"></span>{{ 'neo.legend.hazard' | t }}</li>
+  </ul>
+
+  <div class="plot">
+    <svg [attr.viewBox]="'0 0 ' + viewW + ' ' + viewH" role="img" [attr.aria-label]="'neo.chartBars.aria' | t">
+      <!-- Grade e eixo: hairlines sólidas, um passo acima da superfície -->
+      @for (tick of yTicks(); track tick.value) {
+        <line class="grid" x1="44" [attr.y1]="tick.y" [attr.x2]="viewW - 14" [attr.y2]="tick.y" />
+        <text class="tick" x="36" [attr.y]="tick.y + 4" text-anchor="end">{{ tick.value }}</text>
+      }
+      <line class="axis" x1="44" [attr.y1]="plotBottom" [attr.x2]="viewW - 14" [attr.y2]="plotBottom" />
+
+      @for (col of columns(); track col.date) {
+        <g>
+          @for (seg of col.segments; track $index) {
+            <path [attr.d]="seg.path" [class.hazard]="seg.hazardous" [class.safe]="!seg.hazardous" />
+          }
+          @if (col.labelValue) {
+            <text class="cap-label" [attr.x]="col.centerX" [attr.y]="col.topY - 8" text-anchor="middle">
+              {{ col.labelValue }}
+            </text>
+          }
+          <text class="tick" [attr.x]="col.centerX" [attr.y]="plotBottom + 20" text-anchor="middle">
+            {{ col.date | date: 'dd/MM' : 'UTC' : translate.lang() }}
+          </text>
+          <!-- Alvo de hover/foco: a faixa inteira, não só a coluna -->
+          <rect
+            class="hit"
+            tabindex="0"
+            [attr.x]="col.hitX"
+            y="18"
+            [attr.width]="col.hitW"
+            [attr.height]="plotBottom - 18"
+            (mouseenter)="hover(col)"
+            (mouseleave)="hover(null)"
+            (focus)="hover(col)"
+            (blur)="hover(null)"
+          />
+        </g>
+      }
+    </svg>
+
+    @if (hovered(); as col) {
+      <div class="tooltip" [style.left.%]="tipLeft()" [style.top.%]="tipTop()" role="status">
+        <strong>{{ col.date | date: 'longDate' : 'UTC' : translate.lang() }}</strong>
+        <span>{{ 'neo.tooltip.total' | t: { count: col.data.total } }}</span>
+        <span class="tt-hazard">{{ 'neo.tooltip.hazard' | t: { count: col.data.hazardous } }}</span>
+      </div>
+    }
+  </div>
+</figure>

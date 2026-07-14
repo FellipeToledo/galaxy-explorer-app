@@ -13,5 +13,11 @@ export const routes: Routes = [
       import('./features/mars/mars').then((m) => m.MarsComponent),
     title: 'Galaxy Explorer · Marte',
   },
+  {
+    path: 'asteroids',
+    loadComponent: () =>
+      import('./features/asteroids/asteroids').then((m) => m.AsteroidsComponent),
+    title: 'Galaxy Explorer · Asteroides',
+  },
   { path: '**', redirectTo: '' },
 ];

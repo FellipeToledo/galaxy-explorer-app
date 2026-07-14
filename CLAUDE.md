@@ -54,15 +54,18 @@ src/app/
 │   └── services/nasa-api.service.ts  # HttpClient central (chave via environment)
 ├── features/
 │   ├── apod/               # Foto do Dia (imagem/vídeo, data, aleatório)
-│   └── mars/               # galeria (Image Library), filtros, autocomplete,
-│                           # scroll infinito, lightbox, cards neon
+│   ├── mars/               # galeria (Image Library), filtros, autocomplete,
+│   │                       # scroll infinito, lightbox, cards neon
+│   └── asteroids/          # dashboard NeoWs: stat tiles + 2 gráficos + tabela
+│       └── charts/         # neo-bars, neo-scatter (SVG próprio) + charts.scss
 ├── shared/
 │   ├── starfield/          # fundo de estrelas em <canvas> (fora da zona)
 │   ├── navbar/             # navegação + seletor de idioma
 │   ├── glass-select/       # dropdown glass reutilizável (teclado, aria)
 │   ├── in-view/            # IntersectionObserver → classe .in-view
 │   └── scroll-end/         # IntersectionObserver → output scrolled (infinite)
-└── app.routes.ts           # rotas lazy: '' = APOD, 'mars' = Marte
+└── app.routes.ts           # rotas lazy: '' = APOD, 'mars' = Marte,
+                            # 'asteroids' = Asteroides
 ```
 
 ## Decisões técnicas (não re-litigar)
@@ -92,33 +95,26 @@ src/app/
   `z-index` acima do grid.
 - Verificação de layout com alturas uniformes: reservar linhas com
   `-webkit-line-clamp` + `min-height`.
-
-## Próxima feature planejada: ☄️ Asteroides (NeoWs) + gráficos
-
-Escopo acordado (recomendação aceita pelo usuário):
-
-- **API**: NeoWs `GET https://api.nasa.gov/neo/rest/v1/feed?start_date=…&end_date=…&api_key=…`
-  (janela máx. 7 dias; usa a chave NASA do environment). Resposta:
-  `near_earth_objects: { 'YYYY-MM-DD': NeoObject[] }`; campos úteis:
-  `name`, `estimated_diameter.meters.{min,max}`,
-  `is_potentially_hazardous_asteroid`,
-  `close_approach_data[0].{relative_velocity.kilometers_per_hour,`
-  `miss_distance.{kilometers,lunar}, close_approach_date_full}`,
-  `absolute_magnitude_h`, `nasa_jpl_url`.
-- **UI planejada**: rota `/asteroids` + link no navbar (i18n nos 2 idiomas);
-  dashboard com stat tiles (total da semana, perigosos, mais próximo, mais
-  rápido), gráfico de dispersão distância×tamanho (destacar perigosos) e/ou
-  barras por dia, lista/cards com detalhes, seletor de período (semana).
-- **Gráficos**: seguir a skill `dataviz` (carregar antes de codar os charts);
-  preferir SVG próprio leve ou canvas sem lib pesada, cores do tema
-  (--cyan/--violet/--amber para perigosos), acessível, tooltips.
-- Reutilizar: glass-select (períodos), estados loading/erro/vazio padrão,
-  pipes `t`/`ct`, tema glass.
-- Entregar via PR para main (deploy automático Vercel).
+- **Asteroides (NeoWs)**: `GET {base}/neo/rest/v1/feed?start_date&end_date`
+  (chave NASA; **janela máx. 7 dias**). O feed agrupa por data e **repete todas
+  as aproximações de cada objeto** → o serviço casa a aproximação com o dia do
+  grupo e achata tudo em `Neo[]`. Datas montadas em fuso **local**
+  (`toISOString()` usaria UTC e pularia um dia).
+- **Gráficos (skill `dataviz`)**: SVG próprio, sem lib. As cores das marcas
+  (`charts.scss`: `--mark-safe #0891b2`, `--mark-hazard #d97706`) foram
+  **validadas** por `scripts/validate_palette.js` do skill contra a superfície
+  `#0d0726` — **não trocar por `--cyan`/`--amber`**, que reprovam a banda de
+  luminosidade do modo escuro (são claros demais). `--cyan`/`--amber` seguem
+  valendo para chrome/texto. Regras seguidas (não re-litigar): eixo único,
+  legenda sempre presente + ícone ⚠ (identidade nunca só pela cor), rótulo
+  direto só no pico **quando ele é único**, vão de 2px entre segmentos, anel de
+  2px nos pontos, grade hairline sólida, tabela como leitura acessível (nenhum
+  valor preso no tooltip), dispersão com camada de **ponto-mais-próximo**
+  (mirar pontos de 9px é inviável, ainda mais com o SVG encolhendo no mobile).
 
 ## Backlog / TODOs (levantados na conversa)
 
-Novas seções (após Asteroides):
+Novas seções:
 - [ ] **🌍 EPIC** — imagens de disco completo da Terra (`/EPIC/api/natural`),
       galeria com slider temporal ("Terra flutuando").
 - [ ] **🎨 Busca de mídia** — extrair a busca livre do Marte para uma seção
@@ -135,6 +131,12 @@ Melhorias no que já existe:
       reavaliar viabilidade com a Image Library).
 - [ ] **Indicador "traduzindo…"** enquanto o DeepL/pacote processa o conteúdo.
 - [ ] **Vídeos** (media_type=video) na busca de mídia.
+- [ ] **Nomes de asteroide no `ct`?** — hoje `name` e datas do NeoWs não passam
+      pela tradução de conteúdo (são designações, não prosa). Reavaliar só se
+      aparecer texto livre na seção.
+- [ ] **Períodos além de 7 dias** nos Asteroides — exigiria encadear chamadas ao
+      feed (limite da API) ou usar `/neo/browse`; hoje o seletor tem
+      hoje / próximos 7 / últimos 7.
 
 Infra:
 - [ ] **Cache de tradução durável** — hoje é em memória (some em cold start
@@ -144,7 +146,10 @@ Infra:
 
 Concluídos (referência): i18n UI (pt-BR/en), tradução de conteúdo (DeepL +
 fallback navegador/original), scroll infinito, filtros fiéis (ano+ordenação),
-glass-select, autocomplete, cards neon, deploy Vercel + serverless.
+glass-select, autocomplete, cards neon, deploy Vercel + serverless,
+**☄️ Asteroides (NeoWs)**: rota `/asteroids`, seletor de período, stat tiles
+(total/perigosos/mais próximo/mais rápido), colunas empilhadas por dia,
+dispersão distância×tamanho e tabela — tudo i18n nos 2 idiomas.
 
 ## Histórico essencial (para contexto)
 
@@ -153,4 +158,6 @@ cards neon (CodePen ref do usuário, efeito cometa) → perf (in-view) →
 alturas uniformes → lightbox fix → scroll infinito → filtros fiéis
 (ano + ordenação) → glass-select → autocomplete → z-index fix → i18n UI →
 tradução de conteúdo (browser) → backend DeepL → serverless Vercel →
-PR #19 mergeado, produção OK (usuário confirmou "tudo perfeito e funcional").
+PR #19 mergeado, produção OK (usuário confirmou "tudo perfeito e funcional") →
+chave NASA em `config.json` de runtime (PR #21) → seção Asteroides (NeoWs) com
+gráficos SVG próprios seguindo a skill `dataviz`.
