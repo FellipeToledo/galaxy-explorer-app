@@ -6,6 +6,7 @@ import { AppConfigService } from '../config/app-config.service';
 import { Apod } from '../models/apod.model';
 import { NasaImage } from '../models/mars.model';
 import { Neo } from '../models/neo.model';
+import { EpicImage } from '../models/epic.model';
 
 /** Formato bruto da resposta da NASA Image and Video Library. */
 interface ImageLibraryItem {
@@ -42,6 +43,15 @@ interface NeoFeedResponse {
   near_earth_objects?: Record<string, NeoObject[]>;
 }
 
+/** Formato bruto de um item do EPIC (`/EPIC/api/natural`). */
+interface EpicItem {
+  identifier?: string;
+  caption?: string;
+  image?: string;
+  date?: string;
+  centroid_coordinates?: { lat?: number; lon?: number };
+}
+
 /**
  * Serviço central de acesso às APIs abertas da NASA.
  * - api.nasa.gov (APOD, etc.) usa a chave da configuração.
@@ -72,6 +82,58 @@ export class NasaApiService {
     return this.http.get<Apod>(`${this.base}/planetary/apod`, {
       params: this.withKey(params),
     });
+  }
+
+  // ── EPIC — Earth Polychromatic Imaging Camera ───────────────────────────
+  /** Datas (YYYY-MM-DD) que já têm imagens no arquivo, da mais recente p/ trás. */
+  getEpicDates(): Observable<string[]> {
+    return this.http
+      .get<string[]>(`${this.base}/EPIC/api/natural/available`, {
+        params: this.withKey(),
+      })
+      .pipe(map((dates) => [...(dates ?? [])].sort().reverse()));
+  }
+
+  /** Sequência de imagens de um dia (ou do dia mais recente, sem `date`). */
+  getEpicImages(date?: string): Observable<EpicImage[]> {
+    const path = date
+      ? `${this.base}/EPIC/api/natural/date/${date}`
+      : `${this.base}/EPIC/api/natural`;
+    return this.http
+      .get<EpicItem[]>(path, { params: this.withKey() })
+      .pipe(map((items) => this.mapEpic(items)));
+  }
+
+  private mapEpic(items: EpicItem[]): EpicImage[] {
+    return (items ?? [])
+      .map((item): EpicImage | null => {
+        if (!item.image || !item.date) {
+          return null;
+        }
+        // O caminho do arquivo é derivado da data: /archive/natural/YYYY/MM/DD.
+        const [ymd] = item.date.split(' ');
+        const path = ymd.replace(/-/g, '/');
+        return {
+          identifier: item.identifier ?? item.image,
+          caption: item.caption ?? '',
+          date: item.date,
+          // "YYYY-MM-DD HH:mm:ss" não é ISO válido em todo navegador; é UTC.
+          dateIso: item.date.replace(' ', 'T') + 'Z',
+          imageUrl: this.epicAsset(path, 'jpg', item.image),
+          pngUrl: this.epicAsset(path, 'png', item.image),
+          lat: item.centroid_coordinates?.lat ?? 0,
+          lon: item.centroid_coordinates?.lon ?? 0,
+        };
+      })
+      .filter((x): x is EpicImage => x !== null)
+      // A API já entrega em ordem cronológica, mas o slider depende disso.
+      .sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  /** URL do arquivo do EPIC (as imagens também exigem a chave). */
+  private epicAsset(path: string, ext: 'png' | 'jpg', image: string): string {
+    const key = encodeURIComponent(this.appConfig.nasaApiKey);
+    return `${this.base}/EPIC/archive/natural/${path}/${ext}/${image}.${ext}?api_key=${key}`;
   }
 
   // ── NASA Image and Video Library ────────────────────────────────────────

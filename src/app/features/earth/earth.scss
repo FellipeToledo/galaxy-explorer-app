@@ -1,0 +1,270 @@
+.earth {
+  padding-block: 1rem 3rem;
+}
+
+.head {
+  margin-bottom: 1.5rem;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  margin: 0 0 0.4rem;
+}
+
+.title {
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  font-weight: 900;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  margin: 0.6rem 0 0;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  position: relative;
+  z-index: 20; /* dropdown acima do visualizador */
+}
+
+.control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.control > span {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+}
+
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.state.error {
+  color: #fca5a5;
+}
+
+.hint {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+/* ── Visualizador ─────────────────────────────────────── */
+.viewer {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(560px, 100%);
+  aspect-ratio: 1; /* o disco é quadrado → sem salto de layout entre quadros */
+}
+
+/* Halo atmosférico atrás do disco */
+.halo {
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(34, 211, 238, 0.28),
+    rgba(99, 102, 241, 0.14) 60%,
+    transparent 72%
+  );
+  filter: blur(26px);
+  animation: floatHalo 9s ease-in-out infinite;
+}
+
+.disc {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 50%;
+  /* O quadro seguinte só troca o src: sem transição, a sequência fica nítida */
+  animation: floatDisc 9s ease-in-out infinite;
+}
+
+/* Durante o play a flutuação para: o movimento tem que vir da Terra girando,
+   não do CSS (dois movimentos somados embrulham o olho). */
+.stage.playing .disc,
+.stage.playing .halo {
+  animation: none;
+}
+
+@keyframes floatDisc {
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes floatHalo {
+  50% {
+    transform: translateY(-10px) scale(1.03);
+  }
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.35rem 1rem;
+  font-size: 0.82rem;
+}
+
+.stamp {
+  color: var(--cyan);
+  font-variant-numeric: tabular-nums;
+}
+
+.coords {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.caption {
+  margin: 0;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  max-width: 60ch;
+}
+
+/* ── Linha do tempo ───────────────────────────────────── */
+.timeline {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: min(560px, 100%);
+}
+
+.round-btn {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-strong);
+  color: var(--text);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.round-btn:hover:not(:disabled) {
+  border-color: rgba(34, 211, 238, 0.6);
+  box-shadow: var(--glow-cyan);
+}
+
+.round-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.round-btn.play {
+  background: linear-gradient(120deg, var(--violet), var(--indigo));
+  border-color: transparent;
+}
+
+.slider {
+  flex: 1 1 auto;
+  appearance: none;
+  -webkit-appearance: none;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  outline: none;
+  cursor: pointer;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--cyan);
+  border: none;
+  box-shadow: var(--glow-cyan);
+  cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: var(--glow-cyan);
+  cursor: pointer;
+}
+
+.slider:focus-visible {
+  box-shadow: 0 0 0 2px var(--cyan);
+}
+
+.frame-count {
+  flex: none;
+  min-width: 4.5ch;
+  text-align: right;
+  font-size: 0.76rem;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Pré-carregamento ─────────────────────────────────── */
+.preload {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: min(560px, 100%);
+}
+
+.bar {
+  flex: 1 1 auto;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--cyan), var(--violet));
+  transition: width 0.2s ease;
+}
+
+.preload-text {
+  flex: none;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.hd {
+  margin: 0;
+  font-size: 0.82rem;
+}

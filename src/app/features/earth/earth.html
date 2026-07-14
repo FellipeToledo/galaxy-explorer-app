@@ -1,0 +1,108 @@
+<section class="earth container">
+  <div class="head">
+    <p class="eyebrow">{{ 'earth.eyebrow' | t }}</p>
+    <h1 class="title">
+      {{ 'earth.title1' | t }} <span class="gradient-text">{{ 'earth.title2' | t }}</span>
+    </h1>
+    <p class="subtitle">{{ 'earth.subtitle' | t }}</p>
+  </div>
+
+  <div class="controls">
+    <div class="control">
+      <span>{{ 'earth.date' | t }}</span>
+      <app-glass-select
+        [options]="dateOptions()"
+        [value]="date()"
+        (valueChange)="onDateChange($event)"
+        minWidth="170px"
+        [ariaLabel]="'earth.dateAria' | t"
+      />
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="state glass">
+      <div class="spinner"></div>
+      <p>{{ 'earth.loading' | t }}</p>
+    </div>
+  } @else if (error(); as err) {
+    <div class="state glass error">
+      <p>⚠️ {{ err | t }}</p>
+      <button class="btn btn-primary" (click)="retry()">{{ 'common.retry' | t }}</button>
+    </div>
+  } @else if (frameCount() === 0) {
+    <div class="state glass">
+      <p>🌍 {{ 'earth.empty' | t }}</p>
+      <p class="hint">{{ 'earth.emptyHint' | t }}</p>
+    </div>
+  } @else if (current(); as img) {
+    <div class="viewer glass">
+      <div class="stage" [class.playing]="playing()">
+        <!-- O halo fica atrás do disco e dá o ar de "Terra flutuando" -->
+        <div class="halo" aria-hidden="true"></div>
+        <img
+          class="disc"
+          [src]="img.imageUrl"
+          [alt]="'earth.imageAlt' | t: { date: img.date }"
+        />
+      </div>
+
+      <div class="meta">
+        <span class="stamp">{{ img.dateIso | date: 'medium' : 'UTC' : translate.lang() }} UTC</span>
+        <span class="coords">
+          {{ 'earth.center' | t }}: {{ img.lat | number: '1.1-1' }}°, {{ img.lon | number: '1.1-1' }}°
+        </span>
+      </div>
+
+      @if (img.caption) {
+        <p class="caption">{{ img.caption | ct }}</p>
+      }
+
+      <!-- Slider temporal -->
+      <div class="timeline">
+        <button
+          class="round-btn"
+          (click)="step(-1)"
+          [attr.aria-label]="'earth.prev' | t"
+          [disabled]="frameCount() < 2"
+        >‹</button>
+        <button
+          class="round-btn play"
+          (click)="togglePlay()"
+          [attr.aria-label]="(playing() ? 'earth.pause' : 'earth.play') | t"
+          [disabled]="frameCount() < 2"
+        >{{ playing() ? '❚❚' : '▶' }}</button>
+        <button
+          class="round-btn"
+          (click)="step(1)"
+          [attr.aria-label]="'earth.next' | t"
+          [disabled]="frameCount() < 2"
+        >›</button>
+
+        <input
+          class="slider"
+          type="range"
+          min="0"
+          [max]="frameCount() - 1"
+          [value]="index()"
+          (input)="onSliderInput($any($event.target).value)"
+          [attr.aria-label]="'earth.sliderAria' | t"
+          [attr.aria-valuetext]="img.dateIso | date: 'shortTime' : 'UTC' : translate.lang()"
+        />
+
+        <span class="frame-count">{{ index() + 1 }} / {{ frameCount() }}</span>
+      </div>
+
+      @if (!ready()) {
+        <div class="preload">
+          <div class="bar"><span [style.width.%]="preloadPct()"></span></div>
+          <span class="preload-text">{{ 'earth.preloading' | t: { pct: preloadPct() } }}</span>
+        </div>
+      }
+
+      <p class="hd">
+        <a [href]="img.pngUrl" target="_blank" rel="noopener">{{ 'earth.hd' | t }}</a>
+      </p>
+    </div>
+  }
+</section>

@@ -15,6 +15,7 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'nav.apod': 'Foto do Dia',
     'nav.mars': 'Marte',
     'nav.asteroids': 'Asteroides',
+    'nav.earth': 'Terra',
     'nav.brandAria': 'Galaxy Explorer — início',
     'nav.language': 'Idioma',
 
@@ -62,6 +63,29 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'mars.cardFallbackDesc': 'Imagem do acervo da NASA.',
     'mars.viewImage': 'Ver imagem →',
     'mars.close': 'Fechar',
+
+    // Terra (EPIC)
+    'earth.eyebrow': 'NASA · EPIC — DSCOVR, do ponto L1',
+    'earth.title1': 'Terra',
+    'earth.title2': 'Flutuando',
+    'earth.subtitle':
+      'O disco completo do planeta, fotografado a 1,5 milhão de km ao longo de um dia.',
+    'earth.date': 'Data',
+    'earth.dateAria': 'Escolher a data',
+    'earth.loading': 'Buscando o planeta…',
+    'earth.error':
+      'Não foi possível carregar as imagens da Terra. Verifique sua chave da API ou o limite de requisições.',
+    'earth.empty': 'Nenhuma imagem nesta data.',
+    'earth.emptyHint': 'Tente outra data do arquivo.',
+    'earth.imageAlt': 'Disco completo da Terra em {{date}}',
+    'earth.center': 'Centro',
+    'earth.play': 'Reproduzir a sequência do dia',
+    'earth.pause': 'Pausar',
+    'earth.prev': 'Quadro anterior',
+    'earth.next': 'Próximo quadro',
+    'earth.sliderAria': 'Percorrer os quadros do dia',
+    'earth.preloading': 'Carregando quadros… {{pct}}%',
+    'earth.hd': 'Ver em alta resolução (PNG) ↗',
 
     // Asteroides (NeoWs)
     'neo.eyebrow': 'NASA · NeoWs — Objetos Próximos da Terra',
@@ -121,6 +145,7 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'nav.apod': 'Picture of the Day',
     'nav.mars': 'Mars',
     'nav.asteroids': 'Asteroids',
+    'nav.earth': 'Earth',
     'nav.brandAria': 'Galaxy Explorer — home',
     'nav.language': 'Language',
 
@@ -168,6 +193,29 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'mars.cardFallbackDesc': "Image from NASA's archive.",
     'mars.viewImage': 'View image →',
     'mars.close': 'Close',
+
+    // Earth (EPIC)
+    'earth.eyebrow': 'NASA · EPIC — DSCOVR, from the L1 point',
+    'earth.title1': 'Earth',
+    'earth.title2': 'Afloat',
+    'earth.subtitle':
+      'The full disc of the planet, photographed from 1.5 million km over a single day.',
+    'earth.date': 'Date',
+    'earth.dateAria': 'Choose the date',
+    'earth.loading': 'Finding the planet…',
+    'earth.error':
+      'Could not load the Earth images. Check your API key or the request limit.',
+    'earth.empty': 'No images for this date.',
+    'earth.emptyHint': 'Try another date from the archive.',
+    'earth.imageAlt': 'Full disc of Earth on {{date}}',
+    'earth.center': 'Center',
+    'earth.play': "Play the day's sequence",
+    'earth.pause': 'Pause',
+    'earth.prev': 'Previous frame',
+    'earth.next': 'Next frame',
+    'earth.sliderAria': "Scrub through the day's frames",
+    'earth.preloading': 'Loading frames… {{pct}}%',
+    'earth.hd': 'View in high resolution (PNG) ↗',
 
     // Asteroids (NeoWs)
     'neo.eyebrow': 'NASA · NeoWs — Near Earth Objects',
