@@ -42,6 +42,7 @@ npm run build    # build de produção (dist/galaxy-explorer/browser)
 
 ```text
 server/translate-core.mjs   # núcleo de tradução (DeepL + cache), compartilhado
+server/kv-cache.mjs         # cache durável opcional (KV via REST, sem deps)
 server/index.mjs            # proxy local de dev (Node puro, sem deps)
 api/translate.mjs, health.mjs # funções serverless Vercel (usam o núcleo)
 vercel.json                 # build + outputDirectory + SPA rewrites (preserva /api)
@@ -87,6 +88,16 @@ src/app/
   backend `/api/translate` (DeepL, batching+cache) → Translator API do
   navegador → texto original. `DEEPL_API_KEY` já configurada na Vercel.
   **Toda string nova de UI deve entrar nos dois dicionários.**
+- **Cache de tradução em 2 camadas**: L1 memória + L2 KV durável
+  (`server/kv-cache.mjs`). O KV é **opcional** — ligado só quando existem
+  `KV_REST_API_URL`+`KV_REST_API_TOKEN` (ou o par `UPSTASH_REDIS_REST_*`);
+  sem eles, comportamento antigo (só memória). Falamos com o KV pela **REST API
+  via `fetch`**, sem `@vercel/kv` — `server/` continua sem dependências.
+  Regras: o cache **nunca derruba a tradução** (erro do KV → aviso + segue para
+  o DeepL, com timeout de 3s); chave é `tr:<target>:<sha256(texto)[0..32]>`
+  (texto inteiro na chave vazaria conteúdo e estouraria o tamanho); TTL 30 dias;
+  **`identity` não grava** (encheria o KV com o texto original). `/api/health`
+  expõe `cache: memory | memory+kv`.
 - **Cards neon** (Marte): borda cônica em arco com cauda transparente girando
   via `@property --border-angle` (global em styles.scss), glow no `::after`
   `inset:-8px blur(16px)`; **gira só com `.in-view`** (perf), acelera no hover.
@@ -151,10 +162,14 @@ Melhorias no que já existe:
 - [ ] **Vídeo/GIF do dia no EPIC** — exportar a sequência animada do dia.
 
 Infra:
-- [ ] **Cache de tradução durável** — hoje é em memória (some em cold start
-      do serverless). Avaliar Vercel KV/Redis no `translate-core.mjs`.
-- [ ] Confirmar `DEEPL_API_KEY` também no ambiente **Preview** (se quiser que
-      previews traduzam) — hoje garantida em Production.
+- [ ] **Provisionar o KV na Vercel** — o código do cache durável já está pronto
+      e desligado por padrão. Criar um Vercel KV/Upstash e conectá-lo ao projeto
+      injeta `KV_REST_API_URL`/`KV_REST_API_TOKEN` sozinho; conferir depois em
+      `/api/health` que `cache` virou `memory+kv`. **Só o usuário pode fazer
+      isso** (conta da Vercel).
+- [ ] Marcar `DEEPL_API_KEY` também no ambiente **Preview** (hoje só garantida
+      em Production; sem ela os previews caem no texto original). Documentado no
+      README — **ação do usuário** no painel da Vercel.
 
 Concluídos (referência): i18n UI (pt-BR/en), tradução de conteúdo (DeepL +
 fallback navegador/original), scroll infinito, filtros fiéis (ano+ordenação),

@@ -81,10 +81,33 @@ já configura o build do Angular, o diretório de saída e o SPA fallback.
 
 1. Importe o repositório na Vercel (framework: Other; o `vercel.json` cuida do resto).
 2. Em **Settings → Environment Variables**, adicione `DEEPL_API_KEY`.
+   Marque também o ambiente **Preview**, senão os previews de PR caem no
+   fallback (texto original) e parecem "sem tradução".
 3. Deploy. O front-end chama `/api/translate` (mesma origem) → função → DeepL.
 
 > O `server/` (Node local) e o `api/` (Vercel) compartilham a lógica, então
 > não há duplicação.
+
+### Cache de tradução durável (opcional)
+
+O cache tem duas camadas: **memória** (rápida, mas some no cold start de cada
+instância serverless) e **KV** (durável). Sem KV configurado só a memória vale
+— tudo funciona igual, apenas se paga DeepL de novo depois de cada cold start.
+
+Para ligar o KV: crie um **Vercel KV / Upstash Redis** e conecte-o ao projeto —
+isso injeta `KV_REST_API_URL` e `KV_REST_API_TOKEN` automaticamente, e o núcleo
+passa a usá-lo no próximo deploy. Não é preciso instalar nada: falamos com o KV
+pela REST API via `fetch`, mantendo `server/` sem dependências.
+
+Confira em `GET /api/health` — o campo `cache` mostra `memory` ou `memory+kv`:
+
+```bash
+curl https://<seu-app>.vercel.app/api/health
+# {"ok":true,"provider":"deepl","cached":0,"cache":"memory+kv"}
+```
+
+> Se o KV estiver fora do ar ou mal configurado, a tradução **não quebra**: o
+> núcleo avisa no log e segue direto para o DeepL.
 
 ## 🧱 Arquitetura
 
