@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { TranslateService } from './translate.service';
 import { AppConfigService } from '../config/app-config.service';
@@ -30,6 +30,22 @@ export class ContentTranslateService {
 
   /** Incrementa quando chega tradução nova → atualiza a view (pipe impuro). */
   readonly version = signal(0);
+
+  /** Textos em voo (fila + requisição). Alimenta o indicador "traduzindo…". */
+  private readonly inFlight = signal(0);
+  readonly translating = computed(() => this.inFlight() > 0);
+
+  /**
+   * Ajusta o contador FORA do ciclo de renderização.
+   *
+   * `translate()` é chamado pelo pipe `ct` durante o render, e escrever num
+   * signal aí dispara NG0600 ("Writing to signals is not allowed while Angular
+   * renders the template") — o erro quebra a detecção de mudanças e a tela sai
+   * pela metade. A microtask roda logo após o render terminar.
+   */
+  private bump(delta: number): void {
+    queueMicrotask(() => this.inFlight.update((n) => Math.max(0, n + delta)));
+  }
 
   // Fila de lote para o backend
   private readonly queuedKeys = new Set<string>();
@@ -98,6 +114,7 @@ export class ContentTranslateService {
     }
     this.queuedKeys.add(key);
     this.queuedTexts.push(text);
+    this.bump(1);
     if (!this.flushTimer) {
       this.flushTimer = setTimeout(() => this.flush(), 60);
     }
@@ -125,11 +142,14 @@ export class ContentTranslateService {
           texts.forEach((text, i) => {
             this.cache.set(`${target}::${text}`, out[i] ?? text);
           });
+          this.bump(-texts.length);
           this.version.update((v) => v + 1);
         },
         error: () => {
           // Backend indisponível → usa a API do navegador daqui pra frente.
           this.backendDown = true;
+          // browserTranslate() reconta cada texto; zera a contagem do lote.
+          this.bump(-texts.length);
           for (const text of texts) {
             void this.browserTranslate(text, target, `${target}::${text}`);
           }
@@ -147,6 +167,7 @@ export class ContentTranslateService {
       return;
     }
     this.pending.add(key);
+    this.bump(1);
     try {
       const translator = await this.getTranslator(target);
       const out = translator ? await translator.translate(text) : text;
@@ -156,6 +177,7 @@ export class ContentTranslateService {
       this.cache.set(key, text);
     } finally {
       this.pending.delete(key);
+      this.bump(-1);
     }
   }
 
