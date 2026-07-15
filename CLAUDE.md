@@ -34,6 +34,13 @@ npm run build    # build de produção (dist/galaxy-explorer/browser)
   3. estados de erro nos screenshots são esperados (rede bloqueada) — validar
      layout/comportamento, não dados reais; ser transparente com o usuário
      sobre o que não pôde ser testado de verdade.
+- **Limites do Browser pane** (quando usado no lugar do playwright): a aba fica
+  com `document.visibilityState === 'hidden'` → **`IntersectionObserver` nunca
+  dispara** e o screenshot expira. Ou seja, `.in-view` (borda girando) e o
+  **scroll infinito** não são verificáveis por lá — dá para testar o CSS
+  forçando a classe (`classList.add('in-view')` + `getComputedStyle(el,
+  '::before').animationName`), mas o resto fica com o usuário. **Não** confundir
+  isso com regressão.
 - O usuário valida visualmente na máquina dele; screenshots dele orientam
   ajustes finos. Preferências: perguntar antes de mudanças de escopo, oferecer
   recomendação clara ("vai na sua recomendação" = prosseguir).
@@ -53,12 +60,13 @@ src/app/
 │   ├── i18n/               # TranslateService (UI), ContentTranslateService
 │   │                       # (conteúdo da API), pipes `t` e `ct`, dicionários,
 │   │                       # title.strategy.ts (título da aba por idioma)
-│   ├── models/             # apod.model.ts, mars.model.ts (+ SortMode etc.)
+│   ├── models/             # apod, media (NasaMedia/SortMode), mars (ROVERS),
+│   │                       # neo, epic
 │   └── services/nasa-api.service.ts  # HttpClient central (chave via environment)
 ├── features/
 │   ├── apod/               # Foto do Dia (imagem/vídeo, data, aleatório)
-│   ├── mars/               # galeria (Image Library), filtros, autocomplete,
-│   │                       # scroll infinito, lightbox, cards neon
+│   ├── mars/               # galeria (Image Library): rovers + busca contextual
+│   ├── media/              # 🎨 busca livre no acervo (imagens + vídeos)
 │   ├── asteroids/          # dashboard NeoWs: stat tiles + 2 gráficos + tabela
 │   │   └── charts/         # neo-bars, neo-scatter (SVG próprio) + charts.scss
 │   └── earth/              # EPIC: disco da Terra + slider temporal (play/pause)
@@ -66,11 +74,13 @@ src/app/
 │   ├── starfield/          # fundo de estrelas em <canvas> (fora da zona)
 │   ├── navbar/             # navegação + seletor de idioma
 │   ├── translating/        # chip "traduzindo…" (global, lê o ContentTranslate)
+│   ├── media-card/         # card neon (Marte + Mídia) — CSS mora aqui
+│   ├── media-lightbox/     # lightbox de imagem/vídeo + assets sob demanda
 │   ├── glass-select/       # dropdown glass reutilizável (teclado, aria)
 │   ├── in-view/            # IntersectionObserver → classe .in-view
 │   └── scroll-end/         # IntersectionObserver → output scrolled (infinite)
-└── app.routes.ts           # rotas lazy: '' = APOD, 'mars' = Marte,
-                            # 'asteroids' = Asteroides, 'earth' = Terra
+└── app.routes.ts           # rotas lazy: '' = APOD, 'mars', 'asteroids',
+                            # 'earth', 'media' (title = CHAVE i18n)
 ```
 
 ## Decisões técnicas (não re-litigar)
@@ -132,7 +142,19 @@ src/app/
   (texto inteiro na chave vazaria conteúdo e estouraria o tamanho); TTL 30 dias;
   **`identity` não grava** (encheria o KV com o texto original). `/api/health`
   expõe `cache: memory | memory+kv`.
-- **Cards neon** (Marte): borda cônica em arco com cauda transparente girando
+- **Marte x 🎨 Mídia — não confundir**: o **Marte** é curadoria marciana (chips
+  de rover + busca *dentro* do contexto Marte); a **Mídia** é busca livre no
+  acervo inteiro, com imagens **e vídeos**. A busca do Marte **fica onde está**
+  (decisão do usuário). O que é compartilhado são os componentes:
+  `shared/media-card` e `shared/media-lightbox` — **o CSS do card neon mora no
+  media-card**, não duplicar no feature. Item = `NasaMedia` (`media.model.ts`).
+- **Vídeos** (`media_type=video`): o link `render=image` do item é o frame de
+  capa. Os arquivos vêm do `collection.json`: **`~orig.mp4` = 1,4 GB**,
+  `~small` = 532 MB, **`~mobile` = 118 MB** (o menor → é o que tocamos).
+  **SEMPRE `preload="none"` + `poster`**: o `<video>` faz streaming por range,
+  então nada é baixado até o play — verificado (`buffered.length === 0`).
+  Legendas `.vtt` entram como `<track kind="captions">` quando existem.
+- **Cards neon** (`shared/media-card`): borda cônica em arco com cauda girando
   via `@property --border-angle` (global em styles.scss), glow no `::after`
   `inset:-8px blur(16px)`; **gira só com `.in-view`** (perf), acelera no hover.
   **NUNCA usar `content-visibility:auto`** nesses cards (recorta a borda).
@@ -182,14 +204,9 @@ src/app/
 
 ## Backlog / TODOs (levantados na conversa)
 
-Novas seções:
-- [ ] **🎨 Busca de mídia** — extrair a busca livre do Marte para uma seção
-      própria (reusar cards + autocomplete + scroll infinito).
-
 Melhorias no que já existe:
 - [ ] **Filtro por câmera** no Marte (estava no plano inicial da API antiga;
       reavaliar viabilidade com a Image Library).
-- [ ] **Vídeos** (media_type=video) na busca de mídia.
 - [ ] **Nomes de asteroide no `ct`?** — hoje `name` e datas do NeoWs não passam
       pela tradução de conteúdo (são designações, não prosa). Reavaliar só se
       aparecer texto livre na seção.
@@ -228,6 +245,9 @@ guardam a **chave**, não o texto), indicador "traduzindo…"
 (`shared/translating/`), alta resolução no lightbox via `collection.json` e
 autocomplete dinâmico no Marte (debounce 320ms, mín. 3 chars, `switchMap`
 cancelando o anterior; curadas como fallback).
+**🎨 Busca de mídia**: rota `/media`, busca livre no acervo com filtros de
+tipo (tudo/imagens/vídeos), ano e ordenação, player de vídeo com legendas;
+cards e lightbox extraídos para `shared/` e reusados pelo Marte.
 
 ## Histórico essencial (para contexto)
 

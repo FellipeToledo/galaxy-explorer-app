@@ -17,25 +17,22 @@ import {
   switchMap,
   tap,
 } from 'rxjs/operators';
-import { DatePipe } from '@angular/common';
 import { NasaApiService } from '../../core/services/nasa-api.service';
+import { ROVERS, RoverName } from '../../core/models/mars.model';
 import {
-  NasaImage,
-  NasaImageAssets,
-  ROVERS,
-  RoverName,
+  NasaMedia,
   SORT_OPTIONS,
   SortMode,
-} from '../../core/models/mars.model';
-import { InViewDirective } from '../../shared/in-view/in-view';
+} from '../../core/models/media.model';
 import { ScrollEndDirective } from '../../shared/scroll-end/scroll-end';
+import { MediaCardComponent } from '../../shared/media-card/media-card';
+import { MediaLightboxComponent } from '../../shared/media-lightbox/media-lightbox';
 import {
   GlassSelectComponent,
   SelectOption,
 } from '../../shared/glass-select/glass-select';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslateService } from '../../core/i18n/translate.service';
-import { ContentTranslatePipe } from '../../core/i18n/content-translate.pipe';
 
 /** Tamanho de página padrão da NASA Image and Video Library. */
 const PAGE_SIZE = 100;
@@ -78,12 +75,11 @@ const SEARCH_SUGGESTIONS: string[] = [
   selector: 'app-mars',
   standalone: true,
   imports: [
-    DatePipe,
-    InViewDirective,
     ScrollEndDirective,
+    MediaCardComponent,
+    MediaLightboxComponent,
     GlassSelectComponent,
     TranslatePipe,
-    ContentTranslatePipe,
   ],
   templateUrl: './mars.html',
   styleUrl: './mars.scss',
@@ -120,7 +116,7 @@ export class MarsComponent implements OnInit {
     ...this.years.map((y) => ({ label: y, value: y })),
   ]);
 
-  protected readonly images = signal<NasaImage[]>([]);
+  protected readonly images = signal<NasaMedia[]>([]);
   protected readonly loading = signal(true);
   protected readonly loadingMore = signal(false);
   protected readonly hasMore = signal(false);
@@ -163,7 +159,7 @@ export class MarsComponent implements OnInit {
   });
 
   /** Imagens já ordenadas conforme o modo escolhido (sem novo request). */
-  protected readonly sortedImages = computed<NasaImage[]>(() => {
+  protected readonly sortedImages = computed<NasaMedia[]>(() => {
     const imgs = this.images();
     const mode = this.sort();
     if (mode === 'relevance') {
@@ -181,16 +177,8 @@ export class MarsComponent implements OnInit {
     });
   });
 
-  /** Imagem ampliada no lightbox (ou null). */
-  protected readonly lightbox = signal<NasaImage | null>(null);
-  /** Assets em alta do item aberto; até chegarem, o lightbox usa o thumb. */
-  protected readonly lightboxAssets = signal<NasaImageAssets | null>(null);
-  protected readonly lightboxLoading = signal(false);
-
-  /** Melhor imagem disponível agora: a grande, ou o thumb enquanto carrega. */
-  protected readonly lightboxSrc = computed(
-    () => this.lightboxAssets()?.displayUrl ?? this.lightbox()?.thumbUrl ?? '',
-  );
+  /** Item ampliado no lightbox (ou null) — o componente cuida dos assets. */
+  protected readonly lightbox = signal<NasaMedia | null>(null);
 
   ngOnInit(): void {
     this.runRoverSearch();
@@ -387,30 +375,11 @@ export class MarsComponent implements OnInit {
     return y ? [y, y] : [undefined, undefined];
   }
 
-  protected openLightbox(img: NasaImage): void {
+  protected openLightbox(img: NasaMedia): void {
     this.lightbox.set(img);
-    this.lightboxAssets.set(null);
-    if (!img.collectionUrl) {
-      return;
-    }
-    // Sob demanda: o thumb aparece na hora e a versão grande o substitui.
-    this.lightboxLoading.set(true);
-    this.api.getImageAssets(img.collectionUrl).subscribe({
-      next: (assets) => {
-        // Ignora se o usuário já fechou ou abriu outra imagem nesse meio-tempo.
-        if (this.lightbox()?.nasaId === img.nasaId) {
-          this.lightboxAssets.set(assets);
-        }
-        this.lightboxLoading.set(false);
-      },
-      // Falhou? Fica o thumb — o lightbox não pode quebrar por causa disso.
-      error: () => this.lightboxLoading.set(false),
-    });
   }
 
   protected closeLightbox(): void {
     this.lightbox.set(null);
-    this.lightboxAssets.set(null);
-    this.lightboxLoading.set(false);
   }
 }

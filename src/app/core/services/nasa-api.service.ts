@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AppConfigService } from '../config/app-config.service';
 import { Apod } from '../models/apod.model';
-import { NasaImage, NasaImageAssets } from '../models/mars.model';
+import { MediaAssets, MediaType, NasaMedia } from '../models/media.model';
 import { Neo } from '../models/neo.model';
 import { EpicImage } from '../models/epic.model';
 
@@ -16,6 +16,7 @@ interface ImageLibraryItem {
     description?: string;
     date_created?: string;
     center?: string;
+    media_type?: string;
   }[];
   links?: { href?: string; render?: string; rel?: string }[];
   /** Aponta para o `collection.json` do item (lista os tamanhos). */
@@ -149,10 +150,11 @@ export class NasaApiService {
     page = 1,
     yearStart?: string,
     yearEnd?: string,
-  ): Observable<NasaImage[]> {
+    mediaType: MediaType | 'image,video' = 'image',
+  ): Observable<NasaMedia[]> {
     let params = new HttpParams()
       .set('q', query)
-      .set('media_type', 'image')
+      .set('media_type', mediaType)
       .set('page', String(page));
     if (yearStart) {
       params = params.set('year_start', yearStart);
@@ -214,24 +216,42 @@ export class NasaApiService {
   }
 
   /**
-   * Tamanhos disponíveis de um item, a partir do seu `collection.json`.
+   * Assets de um item, a partir do seu `collection.json`.
    * Chamado sob demanda (lightbox) — são ~100 itens por página, buscar isso
    * para todos seria absurdo.
    */
-  getImageAssets(collectionUrl: string): Observable<NasaImageAssets> {
+  getMediaAssets(
+    collectionUrl: string,
+    mediaType: MediaType = 'image',
+  ): Observable<MediaAssets> {
     return this.http.get<string[]>(collectionUrl).pipe(
       map((urls) => {
         const list = (urls ?? []).map((u) => this.forceHttps(u));
-        const pick = (suffix: string) =>
-          list.find((u) => u.includes(`~${suffix}.`));
+        // Casa "~large.jpg" mas também "~mobile.mp4"; o "_1" dos frames de
+        // vídeo (~small_1.jpg) não pode ser confundido com o asset principal.
+        const pick = (suffix: string, ext: string) =>
+          list.find((u) => u.endsWith(`~${suffix}.${ext}`));
+
+        if (mediaType === 'video') {
+          return {
+            // ~mobile (118 MB) < ~small (532 MB) < ~orig (1,4 GB): sempre o
+            // menor disponível — e nunca pré-carregado (preload="none").
+            videoUrl:
+              pick('mobile', 'mp4') ?? pick('small', 'mp4') ?? pick('preview', 'mp4'),
+            captionsUrl: list.find((u) => u.endsWith('.vtt')),
+            originalUrl: pick('orig', 'mp4'),
+          };
+        }
+
         // Nem todo item traz todos os tamanhos: os antigos (PIA*) costumam ter
         // só ~orig e ~thumb. Por isso a cadeia inteira, do melhor equilíbrio
         // (~large, ~280 KB) até o ~orig, que pode passar de 10 MB e fica por
         // último — mas ainda é melhor que exibir o thumbnail esticado.
+        const img = (s: string) =>
+          pick(s, 'jpg') ?? pick(s, 'png') ?? pick(s, 'jpeg');
         return {
-          displayUrl:
-            pick('large') ?? pick('medium') ?? pick('small') ?? pick('orig'),
-          originalUrl: pick('orig'),
+          displayUrl: img('large') ?? img('medium') ?? img('small') ?? img('orig'),
+          originalUrl: img('orig'),
         };
       }),
     );
@@ -293,11 +313,12 @@ export class NasaApiService {
     return list.sort((a, b) => a.missKm - b.missKm);
   }
 
-  private mapImages(res: ImageLibraryResponse): NasaImage[] {
+  private mapImages(res: ImageLibraryResponse): NasaMedia[] {
     const items = res.collection?.items ?? [];
     return items
-      .map((item): NasaImage | null => {
+      .map((item): NasaMedia | null => {
         const data = item.data?.[0];
+        // Para vídeo, o link render=image é o frame de capa.
         const thumbUrl = item.links?.find((l) => l.render === 'image')?.href
           ?? item.links?.[0]?.href;
         if (!data?.nasa_id || !thumbUrl) {
@@ -309,10 +330,11 @@ export class NasaApiService {
           description: data.description,
           dateCreated: data.date_created,
           center: data.center,
-          thumbUrl,
+          thumbUrl: this.forceHttps(thumbUrl),
+          mediaType: data.media_type === 'video' ? 'video' : 'image',
           collectionUrl: item.href,
         };
       })
-      .filter((x): x is NasaImage => x !== null);
+      .filter((x): x is NasaMedia => x !== null);
   }
 }

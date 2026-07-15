@@ -1,0 +1,55 @@
+<div class="lightbox" (click)="close.emit()">
+  <button class="close" (click)="close.emit()" [attr.aria-label]="'media.close' | t">✕</button>
+
+  <figure (click)="$event.stopPropagation()">
+    @if (isVideo()) {
+      @if (assets()?.videoUrl; as video) {
+        <!-- preload="none": o ~mobile do acervo chega a 118 MB (o ~orig, a
+             1,4 GB). O poster segura a capa até o play. -->
+        <video
+          class="player"
+          controls
+          preload="none"
+          [poster]="item().thumbUrl"
+          [src]="video"
+        >
+          @if (assets()?.captionsUrl; as vtt) {
+            <track kind="captions" [src]="vtt" srclang="en" default />
+          }
+        </video>
+      } @else if (loading()) {
+        <div class="video-placeholder">
+          <div class="spinner"></div>
+        </div>
+      } @else {
+        <!-- Sem arquivo de vídeo: mostra a capa em vez de um player quebrado -->
+        <img [src]="item().thumbUrl" [alt]="item().title" />
+        <p class="no-video">{{ 'media.videoUnavailable' | t }}</p>
+      }
+    } @else {
+      <!-- Começa no thumb e troca pela versão grande quando o manifest chega -->
+      <img [src]="imageSrc()" [alt]="item().title" />
+      @if (loading()) {
+        <span class="hd-loading">{{ 'media.loadingHd' | t }}</span>
+      }
+    }
+
+    <figcaption class="glass">
+      <strong>{{ item().title | ct }}</strong>
+      @if (item().dateCreated) {
+        <span class="fc-date">
+          {{ item().dateCreated | date: 'longDate' : undefined : translate.lang() }}
+          @if (item().center) { · {{ item().center }} }
+        </span>
+      }
+      @if (item().description) {
+        <span class="fc-desc">{{ item().description | ct }}</span>
+      }
+      @if (assets()?.originalUrl; as orig) {
+        <a class="fc-orig" [href]="orig" target="_blank" rel="noopener">
+          {{ 'media.viewOriginal' | t }}
+        </a>
+      }
+    </figcaption>
+  </figure>
+</div>
