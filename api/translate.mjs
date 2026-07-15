@@ -28,6 +28,12 @@ export default async function handler(req, res) {
     res.status(200).json({ translations });
   } catch (err) {
     console.error('translate error:', err?.message);
-    res.status(502).json({ error: 'translation_failed' });
+    // Propaga o motivo do provider: um 502 pelado não diz se é chave errada,
+    // quota estourada ou host errado. Não vaza a chave — só o texto do DeepL.
+    res.status(502).json({
+      error: 'translation_failed',
+      upstream: err?.status ?? null,
+      detail: err?.detail ?? err?.message ?? null,
+    });
   }
 }

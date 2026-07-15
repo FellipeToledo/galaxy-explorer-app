@@ -13,6 +13,8 @@ import {
   providerName,
   cacheSize,
   cacheBackend,
+  providerDiagnostics,
+  selfTest,
 } from './translate-core.mjs';
 
 const PORT = Number(process.env.PORT) || 3001;
@@ -36,12 +38,19 @@ const server = createServer((req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
 
   if (req.method === 'GET' && url.pathname === '/api/health') {
-    sendJson(res, 200, {
+    const body = {
       ok: true,
       provider: providerName(),
       cached: cacheSize(),
       cache: cacheBackend(),
-    });
+      deepl: providerDiagnostics(),
+    };
+    // ?check=deepl → bate na API de verdade (ver api/health.mjs).
+    if (url.searchParams.get('check') === 'deepl') {
+      selfTest().then((check) => sendJson(res, 200, { ...body, check }));
+      return;
+    }
+    sendJson(res, 200, body);
     return;
   }
 
@@ -64,7 +73,11 @@ const server = createServer((req, res) => {
         sendJson(res, 200, { translations });
       } catch (err) {
         console.error('translate error:', err.message);
-        sendJson(res, 502, { error: 'translation_failed' });
+        sendJson(res, 502, {
+          error: 'translation_failed',
+          upstream: err.status ?? null,
+          detail: err.detail ?? err.message ?? null,
+        });
       }
     });
     return;
