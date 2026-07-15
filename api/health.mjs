@@ -1,9 +1,10 @@
 /**
  * Função serverless da Vercel — GET /api/health (diagnóstico).
  *
- * `?check=deepl` faz uma tradução real de uma palavra e reporta o status
- * devolvido pela DeepL. Sem isso, o health só afirma que a env var existe —
- * e "env var presente" não é o mesmo que "a API aceita a chave".
+ * `?check=deepl` traduz uma palavra de verdade; `?check=kv` escreve e lê uma
+ * chave no cache durável; `?check=all` faz os dois. Sem eles, o health só
+ * afirma que as env vars existem — e "env var presente" não é o mesmo que
+ * "funciona" (foi assim que uma quota estourada passou por chave inválida).
  */
 import {
   providerName,
@@ -11,6 +12,7 @@ import {
   cacheBackend,
   providerDiagnostics,
   selfTest,
+  kvSelfTest,
 } from '../server/translate-core.mjs';
 
 export default async function handler(req, res) {
@@ -23,8 +25,13 @@ export default async function handler(req, res) {
   };
 
   const url = new URL(req.url, 'http://localhost');
-  if (url.searchParams.get('check') === 'deepl') {
+  const check = url.searchParams.get('check');
+
+  if (check === 'deepl' || check === 'all') {
     body.check = await selfTest();
+  }
+  if (check === 'kv' || check === 'all') {
+    body.kvCheck = await kvSelfTest();
   }
 
   res.status(200).json(body);

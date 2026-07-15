@@ -112,11 +112,14 @@ src/app/
   2. Cache **KV** (L2): sem ele, todo cold start re-traduz tudo do zero.
   Sintoma de quota estourada: `/api/translate` → 502 com `upstream: 456`.
 - **Diagnóstico da tradução**: `/api/health` mostra `provider`, `cache` e o bloco
-  `deepl` (`keyKind`, `host`, `endpointMatchesKey`, **sem expor a chave**);
-  `/api/health?check=deepl` **chama a API de verdade** e reporta o status — env
-  var presente ≠ chave funcionando. Erros do `/api/translate` trazem `upstream`
-  (status do DeepL) e `detail`: **403** chave/host, **456** quota do mês,
-  **429** taxa. Se pedirem para depurar tradução, **comece por aqui**.
+  `deepl` (`keyKind`, `host`, `endpointMatchesKey`, **sem expor a chave**).
+  **Env var presente ≠ funcionando** — essa confusão já custou duas sessões de
+  debug, então os checks batem no serviço de verdade:
+  `?check=deepl` traduz uma palavra, `?check=kv` grava e lê uma chave no cache,
+  `?check=all` faz os dois. `cache: memory+kv` só prova que as **env vars
+  existem**; quem prova o KV é o `kvCheck`. Erros do `/api/translate` trazem
+  `upstream` (status do DeepL) e `detail`: **403** chave/host, **456** quota do
+  mês, **429** taxa. Se pedirem para depurar tradução, **comece por aqui**.
 - **Cache de tradução em 2 camadas**: L1 memória + L2 KV durável
   (`server/kv-cache.mjs`). O KV é **opcional** — ligado só quando existem
   `KV_REST_API_URL`+`KV_REST_API_TOKEN` (ou o par `UPSTASH_REDIS_REST_*`);
@@ -191,23 +194,21 @@ Melhorias no que já existe:
 - [ ] **Vídeo/GIF do dia no EPIC** — exportar a sequência animada do dia.
 
 Infra:
-- [ ] **Provisionar o KV na Vercel** — o código do cache durável já está pronto
-      e desligado por padrão. Criar um Vercel KV/Upstash e conectá-lo ao projeto
-      injeta `KV_REST_API_URL`/`KV_REST_API_TOKEN` sozinho; conferir depois em
-      `/api/health` que `cache` virou `memory+kv`. **Só o usuário pode fazer
-      isso** (conta da Vercel).
-- [ ] Marcar `DEEPL_API_KEY` também no ambiente **Preview** (hoje só garantida
-      em Production; sem ela os previews caem no texto original). Documentado no
-      README — **ação do usuário** no painel da Vercel.
-- [ ] **Definir `NASA_API_KEY` na Vercel** (Production **e** Preview) e redeploy.
-      O código já está pronto; **sem isso a produção segue em DEMO_KEY → 429**
-      em APOD/Asteroides/Terra. Precisa de uma chave gratuita de
-      https://api.nasa.gov/ — **só o usuário pode criar**. Conferir depois que
-      `/config.json` do site publicado não traz `DEMO_KEY`.
+- [ ] **Esperar o reset da quota do DeepL** (estourou; ver a data do ciclo no
+      painel da DeepL). Até lá o app cai no fallback (texto original) — é o
+      comportamento correto, não é bug. Depois, conferir com
+      `/api/health?check=all` que `check.ok` virou `true`.
+- [ ] **Vercel: provisionar KV foi feito com o `Upstash for Redis`** — se algum
+      dia precisar refazer, **não** use o provider "Redis" (redis.io) do
+      marketplace: ele injeta só `REDIS_URL` (TCP `redis://`), e o
+      `kv-cache.mjs` fala **REST/HTTP**. Sinal de acerto: aparecem
+      `KV_REST_API_URL`/`KV_REST_API_TOKEN`. Env var nova **exige redeploy**.
 
 Concluídos (referência): i18n UI (pt-BR/en), tradução de conteúdo (DeepL +
 fallback navegador/original), scroll infinito, filtros fiéis (ano+ordenação),
 glass-select, autocomplete, cards neon, deploy Vercel + serverless,
+**infra de produção**: `NASA_API_KEY` e `DEEPL_API_KEY` definidas na Vercel
+(Production + Preview) e **KV provisionado** (Upstash, `cache: memory+kv`),
 **☄️ Asteroides (NeoWs)**: rota `/asteroids`, seletor de período, stat tiles
 (total/perigosos/mais próximo/mais rápido), colunas empilhadas por dia,
 dispersão distância×tamanho e tabela — tudo i18n nos 2 idiomas.

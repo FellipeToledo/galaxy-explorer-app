@@ -15,6 +15,7 @@ import {
   cacheBackend,
   providerDiagnostics,
   selfTest,
+  kvSelfTest,
 } from './translate-core.mjs';
 
 const PORT = Number(process.env.PORT) || 3001;
@@ -45,9 +46,19 @@ const server = createServer((req, res) => {
       cache: cacheBackend(),
       deepl: providerDiagnostics(),
     };
-    // ?check=deepl → bate na API de verdade (ver api/health.mjs).
-    if (url.searchParams.get('check') === 'deepl') {
-      selfTest().then((check) => sendJson(res, 200, { ...body, check }));
+    // ?check=deepl|kv|all → testa de verdade (ver api/health.mjs).
+    const check = url.searchParams.get('check');
+    if (check) {
+      Promise.all([
+        check === 'deepl' || check === 'all' ? selfTest() : null,
+        check === 'kv' || check === 'all' ? kvSelfTest() : null,
+      ]).then(([deeplCheck, kvCheck]) => {
+        sendJson(res, 200, {
+          ...body,
+          ...(deeplCheck ? { check: deeplCheck } : {}),
+          ...(kvCheck ? { kvCheck } : {}),
+        });
+      });
       return;
     }
     sendJson(res, 200, body);
