@@ -153,9 +153,14 @@ export class NasaApiService {
     mediaType: MediaType | 'image,video' = 'image',
   ): Observable<NasaMedia[]> {
     let params = new HttpParams()
-      .set('q', query)
       .set('media_type', mediaType)
       .set('page', String(page));
+    // `q` é OPCIONAL: a API aceita filtrar só por ano/tipo (verificado — só
+    // ano devolve milhares de itens). Mandar `q=` vazio funciona, mas omitir
+    // deixa claro que é "navegar pelos filtros", não "buscar por nada".
+    if (query.trim()) {
+      params = params.set('q', query.trim());
+    }
     if (yearStart) {
       params = params.set('year_start', yearStart);
     }

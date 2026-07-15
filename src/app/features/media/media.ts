@@ -216,13 +216,10 @@ export class MediaComponent implements OnInit {
     this.suggestTerm.next(value.trim());
   }
 
+  /** Busca o termo digitado — ou, com o campo vazio, navega só pelos filtros. */
   protected submitSearch(): void {
-    const term = this.searchQuery().trim();
-    if (!term) {
-      return;
-    }
     this.showSuggestions.set(false);
-    this.search(term);
+    this.search(this.searchQuery().trim());
   }
 
   protected selectSuggestion(term: string): void {
@@ -295,10 +292,15 @@ export class MediaComponent implements OnInit {
     this.rerunSearch();
   }
 
+  /**
+   * Refaz a busca ao mexer num filtro da API (tipo/ano).
+   *
+   * Roda **mesmo sem termo**: antes, mexer no ano sem ter buscado não fazia
+   * nada e a tela ficava no convite, como se o filtro estivesse quebrado.
+   * A API aceita ano/tipo sem `q`, então filtrar é uma busca por si só.
+   */
   private rerunSearch(): void {
-    if (this.currentTerm) {
-      this.search(this.currentTerm);
-    }
+    this.search(this.currentTerm);
   }
 
   private search(term: string): void {
