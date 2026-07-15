@@ -19,8 +19,11 @@
           {{ item().description ? (item().description | ct: 160) : ('media.cardFallbackDesc' | t) }}
         </span>
         <span class="card-meta">
+          <!-- 'UTC': a API data em UTC e filtra o ano por ele. Em fuso local,
+               1938-01-01T00:00Z apareceria como 31/12/1937 — o card mostrando
+               um ano diferente do filtro selecionado. -->
           <span class="card-date">
-            {{ item().dateCreated ? (item().dateCreated | date: 'mediumDate' : undefined : translate.lang()) : '' }}
+            {{ item().dateCreated ? (item().dateCreated | date: 'mediumDate' : 'UTC' : translate.lang()) : '' }}
           </span>
           <span class="card-cta">
             {{ (isVideo() ? 'media.viewVideo' : 'media.viewImage') | t }}
