@@ -97,6 +97,16 @@ src/app/
   backend `/api/translate` (DeepL, batching+cache) → Translator API do
   navegador → texto original. `DEEPL_API_KEY` já configurada na Vercel.
   **Toda string nova de UI deve entrar nos dois dicionários.**
+- **DeepL Free x Pro**: são **hosts diferentes** — chave terminada em `:fx` é
+  Free (`api-free.deepl.com`); sem `:fx` é Pro (`api.deepl.com`). Host errado →
+  **403**, que se disfarça de "chave inválida". `deeplEndpoint()` escolhe pelo
+  formato da chave; `DEEPL_API_URL` força manualmente (aí `urlOverridden`).
+- **Diagnóstico da tradução**: `/api/health` mostra `provider`, `cache` e o bloco
+  `deepl` (`keyKind`, `host`, `endpointMatchesKey`, **sem expor a chave**);
+  `/api/health?check=deepl` **chama a API de verdade** e reporta o status — env
+  var presente ≠ chave funcionando. Erros do `/api/translate` trazem `upstream`
+  (status do DeepL) e `detail`: **403** chave/host, **456** quota do mês,
+  **429** taxa. Se pedirem para depurar tradução, **comece por aqui**.
 - **Cache de tradução em 2 camadas**: L1 memória + L2 KV durável
   (`server/kv-cache.mjs`). O KV é **opcional** — ligado só quando existem
   `KV_REST_API_URL`+`KV_REST_API_TOKEN` (ou o par `UPSTASH_REDIS_REST_*`);
