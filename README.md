@@ -28,11 +28,16 @@ cp public/config.example.json public/config.json
 ```
 
 O `AppConfigService` carrega esse `config.json` no boot (via `APP_INITIALIZER`)
-e sobrescreve os padrões do `environment`. Sem o arquivo (clone novo/produção),
-usa `DEMO_KEY`.
+e sobrescreve os padrões do `environment`. Sem o arquivo, usa `DEMO_KEY`.
 
-> `DEMO_KEY` funciona para testes, mas tem limites baixos (30 req/h, 50/dia).
-> Chave gratuita em https://api.nasa.gov/.
+**Em produção**, como o arquivo não é versionado, ele é gerado no build a partir
+da env var `NASA_API_KEY` (veja [Deploy na Vercel](#deploy-na-vercel-serverless)).
+
+> `DEMO_KEY` **não serve para uso real**: são 30 requisições/hora **por IP**,
+> compartilhadas com todo mundo que usa o mesmo padrão — na prática ela vive
+> estourada e a API responde `429 OVER_RATE_LIMIT`. Como só Marte dispensa
+> chave, é o sintoma clássico de "só Marte funciona".
+> Chave gratuita (e instantânea) em https://api.nasa.gov/.
 >
 > ⚠️ Sendo front-end, a chave fica visível no bundle — o `config.json` evita
 > conflitos/commit acidental, mas não a torna secreta no cliente. Para
@@ -80,10 +85,23 @@ O mesmo proxy roda como **função serverless** em `api/translate.mjs` (e
 já configura o build do Angular, o diretório de saída e o SPA fallback.
 
 1. Importe o repositório na Vercel (framework: Other; o `vercel.json` cuida do resto).
-2. Em **Settings → Environment Variables**, adicione `DEEPL_API_KEY`.
-   Marque também o ambiente **Preview**, senão os previews de PR caem no
-   fallback (texto original) e parecem "sem tradução".
+2. Em **Settings → Environment Variables**, adicione:
+   - **`NASA_API_KEY`** — obrigatória. Sem ela, o build cai no `DEMO_KEY`
+     (30 requisições/hora **por IP**, compartilhado com o mundo todo), e APOD,
+     Asteroides e Terra respondem **HTTP 429** em produção. Só Marte escapa,
+     porque a Image Library não exige chave. Pegue a sua (grátis, na hora) em
+     https://api.nasa.gov/.
+   - **`DEEPL_API_KEY`** — tradução de conteúdo.
+
+   Marque as duas também no ambiente **Preview**, senão os previews de PR ficam
+   sem chave (429 na NASA e texto original em vez de tradução).
 3. Deploy. O front-end chama `/api/translate` (mesma origem) → função → DeepL.
+
+> **Como a chave da NASA chega no cliente:** `public/config.json` é gitignored,
+> então não existe no repositório. No build, `scripts/generate-config.mjs`
+> (rodado pelo `npm run build`) gera o arquivo a partir de `NASA_API_KEY`. Sem a
+> env var, o script **não toca** num `config.json` existente — o seu local
+> continua intacto quando você builda na sua máquina.
 
 > O `server/` (Node local) e o `api/` (Vercel) compartilham a lógica, então
 > não há duplicação.
