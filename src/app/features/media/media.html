@@ -1,26 +1,13 @@
-<section class="mars container">
+<section class="media container">
   <div class="head">
-    <div>
-      <p class="eyebrow">{{ 'mars.eyebrow' | t }}</p>
-      <h1 class="title">
-        {{ 'mars.title1' | t }} <span class="gradient-text">{{ 'mars.title2' | t }}</span>
-      </h1>
-      <p class="subtitle">{{ 'mars.subtitle' | t }}</p>
-    </div>
+    <p class="eyebrow">{{ 'media.eyebrow' | t }}</p>
+    <h1 class="title">
+      {{ 'media.title1' | t }} <span class="gradient-text">{{ 'media.title2' | t }}</span>
+    </h1>
+    <p class="subtitle">{{ 'media.subtitle' | t }}</p>
   </div>
 
   <div class="filters glass">
-    <div class="rovers">
-      @for (r of rovers; track r.name) {
-        <button
-          class="chip"
-          [class.active]="rover() === r.name"
-          (click)="selectRover(r.name)"
-        >
-          {{ r.label }}
-        </button>
-      }
-    </div>
     <div class="search-wrap">
       <form class="search" (submit)="$event.preventDefault(); submitSearch()">
         <input
@@ -33,14 +20,14 @@
           (input)="onSearchInput($any($event.target).value)"
           (focus)="showSuggestions.set(true)"
           (keydown)="onSearchKeydown($event)"
-          [placeholder]="'mars.searchPlaceholder' | t"
-          [attr.aria-label]="'mars.searchAria' | t"
+          [placeholder]="'media.searchPlaceholder' | t"
+          [attr.aria-label]="'media.searchAria' | t"
         />
-        <button type="submit" class="chip search-btn" [attr.aria-label]="'mars.searchAria' | t">
+        <button type="submit" class="btn btn-primary search-btn" [attr.aria-label]="'media.searchAria' | t">
           @if (suggestLoading()) {
             <span class="mini-spinner" aria-hidden="true"></span>
           } @else {
-            🔍
+            {{ 'media.searchBtn' | t }}
           }
         </button>
       </form>
@@ -65,26 +52,35 @@
     </div>
   </div>
 
-  <!-- Filtro por ano (API) + ordenação (client-side) -->
   <div class="controls">
     <div class="control">
-      <span>{{ 'mars.year' | t }}</span>
+      <span>{{ 'media.type' | t }}</span>
+      <app-glass-select
+        [options]="typeOptions()"
+        [value]="type()"
+        (valueChange)="onTypeChange($event)"
+        minWidth="140px"
+        [ariaLabel]="'media.typeAria' | t"
+      />
+    </div>
+    <div class="control">
+      <span>{{ 'media.year' | t }}</span>
       <app-glass-select
         [options]="yearOptions()"
         [value]="year()"
         (valueChange)="onYearChange($event)"
         minWidth="150px"
-        [ariaLabel]="'mars.filterYearAria' | t"
+        [ariaLabel]="'media.filterYearAria' | t"
       />
     </div>
     <div class="control">
-      <span>{{ 'mars.sort' | t }}</span>
+      <span>{{ 'media.sort' | t }}</span>
       <app-glass-select
         [options]="sortOptions()"
         [value]="sort()"
         (valueChange)="onSortChange($event)"
         minWidth="160px"
-        [ariaLabel]="'mars.sortAria' | t"
+        [ariaLabel]="'media.sortAria' | t"
       />
     </div>
   </div>
@@ -92,47 +88,51 @@
   @if (loading()) {
     <div class="state glass">
       <div class="spinner"></div>
-      <p>{{ 'mars.loading' | t }}</p>
+      <p>{{ 'media.loading' | t }}</p>
     </div>
   } @else if (error(); as err) {
     <div class="state glass error">
       <p>⚠️ {{ err | t }}</p>
       <button class="btn btn-primary" (click)="retry()">{{ 'common.retry' | t }}</button>
     </div>
-  } @else if (images().length === 0) {
+  } @else if (!searched()) {
+    <!-- Estado inicial: convite, não "nada encontrado" -->
     <div class="state glass">
-      <p>{{ 'mars.empty' | t }}</p>
-      <p class="hint">{{ 'mars.emptyHint' | t }}</p>
+      <p class="invite">🔭 {{ 'media.invite' | t }}</p>
+      <p class="hint">{{ 'media.inviteHint' | t }}</p>
+    </div>
+  } @else if (items().length === 0) {
+    <div class="state glass">
+      <p>{{ 'media.empty' | t }}</p>
+      <p class="hint">{{ 'media.emptyHint' | t }}</p>
     </div>
   } @else {
-    <p class="count">{{ 'mars.count' | t: { count: images().length } }}</p>
+    <p class="count">{{ 'media.count' | t: { count: items().length } }}</p>
     <div class="grid">
-      @for (img of sortedImages(); track img.nasaId; let i = $index) {
+      @for (item of sortedItems(); track item.nasaId; let i = $index) {
         <app-media-card
-          [item]="img"
+          [item]="item"
           [index]="i"
-          [brand]="'mars.cardBrand' | t"
+          [brand]="'media.cardBrand' | t"
           (open)="openLightbox($event)"
         />
       }
     </div>
 
-    <!-- Scroll infinito: sentinela + fallback manual -->
     @if (hasMore()) {
       <div class="load-more" appScrollEnd (scrolled)="loadMore()">
         @if (loadingMore()) {
           <div class="spinner"></div>
         } @else {
-          <button class="btn" (click)="loadMore()">{{ 'mars.loadMore' | t }}</button>
+          <button class="btn" (click)="loadMore()">{{ 'media.loadMore' | t }}</button>
         }
       </div>
     } @else {
-      <p class="end-note">{{ 'mars.end' | t }}</p>
+      <p class="end-note">{{ 'media.end' | t }}</p>
     }
   }
 </section>
 
-<!-- Lightbox -->
-@if (lightbox(); as img) {
-  <app-media-lightbox [item]="img" (close)="closeLightbox()" />
+@if (lightbox(); as item) {
+  <app-media-lightbox [item]="item" (close)="closeLightbox()" />
 }

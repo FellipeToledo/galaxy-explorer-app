@@ -1,0 +1,32 @@
+<button class="card" appInView [attr.data-theme]="theme()" (click)="open.emit(item())">
+  <span class="card-body">
+    <span class="card-inner">
+      <span class="card-img">
+        <span class="card-img-glow"></span>
+        <img class="card-photo" [src]="item().thumbUrl" [alt]="item().title" loading="lazy" />
+        <span class="card-badge">{{ item().center || 'NASA' }}</span>
+        @if (isVideo()) {
+          <span class="card-play" aria-hidden="true">▶</span>
+        }
+      </span>
+      <span class="card-info">
+        <span class="card-brand">{{ brand() }}</span>
+        <span class="card-name">{{ item().title | ct }}</span>
+        <!-- ct: 160 → o card corta em 2 linhas; traduzir os ~615 chars
+             inteiros da NASA queimaria a quota com texto invisível.
+             O lightbox traduz a descrição completa. -->
+        <span class="card-desc">
+          {{ item().description ? (item().description | ct: 160) : ('media.cardFallbackDesc' | t) }}
+        </span>
+        <span class="card-meta">
+          <span class="card-date">
+            {{ item().dateCreated ? (item().dateCreated | date: 'mediumDate' : undefined : translate.lang()) : '' }}
+          </span>
+          <span class="card-cta">
+            {{ (isVideo() ? 'media.viewVideo' : 'media.viewImage') | t }}
+          </span>
+        </span>
+      </span>
+    </span>
+  </span>
+</button>

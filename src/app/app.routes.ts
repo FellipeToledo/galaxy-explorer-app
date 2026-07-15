@@ -29,5 +29,11 @@ export const routes: Routes = [
       import('./features/earth/earth').then((m) => m.EarthComponent),
     title: 'title.earth',
   },
+  {
+    path: 'media',
+    loadComponent: () =>
+      import('./features/media/media').then((m) => m.MediaComponent),
+    title: 'title.media',
+  },
   { path: '**', redirectTo: '' },
 ];
