@@ -94,16 +94,24 @@ e devolve o status — é a diferença entre "a chave está configurada" e "a ch
 funciona":
 
 ```bash
-curl "https://<seu-app>.vercel.app/api/health?check=deepl"
-# { "provider":"deepl",
+curl "https://<seu-app>.vercel.app/api/health?check=all"
+# { "provider":"deepl", "cache":"memory+kv",
 #   "deepl":{"keyKind":"free","host":"api-free.deepl.com","endpointMatchesKey":true},
-#   "check":{"ok":true,"status":200,"sample":"ping"} }
+#   "check":{"ok":true,"status":200,"sample":"ping"},
+#   "kvCheck":{"ok":true,"status":200,"roundTrip":"escreveu e leu de volta"} }
 ```
 
-Se `check.ok` for `false`, o `status` diz o que houve: **403** = chave inválida
-ou host trocado (confira `endpointMatchesKey`); **456** = quota do mês
-estourada; **429** = limite de taxa. O `POST /api/translate` também devolve
-`upstream` e `detail` quando falha.
+- `?check=deepl` traduz uma palavra de verdade. Se `check.ok` for `false`, o
+  `status` diz o que houve: **403** = chave inválida ou host trocado (confira
+  `endpointMatchesKey`); **456** = quota do mês estourada; **429** = taxa.
+- `?check=kv` escreve e lê uma chave no cache durável. Repare que
+  `cache: "memory+kv"` só prova que as **env vars existem** — quem prova que o
+  Upstash responde é o `kvCheck`. Isso importa porque o cache falha em silêncio
+  de propósito (nunca derrubar a tradução), então um KV quebrado passaria
+  despercebido, gastando quota à toa.
+- `?check=all` roda os dois.
+
+O `POST /api/translate` também devolve `upstream` e `detail` quando falha.
 - Trocar de provedor (Google/LibreTranslate) = ajustar apenas
   `server/translate-core.mjs` (compartilhado por dev e serverless).
 
@@ -141,10 +149,18 @@ O cache tem duas camadas: **memória** (rápida, mas some no cold start de cada
 instância serverless) e **KV** (durável). Sem KV configurado só a memória vale
 — tudo funciona igual, apenas se paga DeepL de novo depois de cada cold start.
 
-Para ligar o KV: crie um **Vercel KV / Upstash Redis** e conecte-o ao projeto —
-isso injeta `KV_REST_API_URL` e `KV_REST_API_TOKEN` automaticamente, e o núcleo
-passa a usá-lo no próximo deploy. Não é preciso instalar nada: falamos com o KV
-pela REST API via `fetch`, mantendo `server/` sem dependências.
+Para ligar o KV: em **Storage → Create Database**, escolha o **Upstash for
+Redis** e conecte-o ao projeto — isso injeta `KV_REST_API_URL` e
+`KV_REST_API_TOKEN` automaticamente. Não é preciso instalar nada: falamos com o
+KV pela REST API via `fetch`, mantendo `server/` sem dependências.
+
+> ⚠️ **Não use o provider "Redis" (redis.io) do marketplace**: ele injeta apenas
+> `REDIS_URL` (`redis://`, TCP), e este código fala **REST/HTTP** — o cache
+> ficaria desligado silenciosamente. O sinal de que deu certo é aparecerem as
+> variáveis `KV_REST_API_*`. Conexão TCP persistente também não combina com
+> serverless; o REST do Upstash existe justamente para esse caso.
+>
+> **Env var nova só vale depois de um redeploy** — o deploy atual não a enxerga.
 
 Confira em `GET /api/health` — o campo `cache` mostra `memory` ou `memory+kv`:
 

@@ -15,7 +15,15 @@
  *
  * Sem chave e sem MOCK, devolve o texto original (identidade).
  */
-import { cacheKey, kvEnabled, kvGetMany, kvSetMany } from './kv-cache.mjs';
+import {
+  cacheKey,
+  kvEnabled,
+  kvGetMany,
+  kvSetMany,
+  kvSelfTest,
+} from './kv-cache.mjs';
+
+export { kvSelfTest };
 
 /** Cache L1, em memória (persiste em instâncias "quentes" do serverless). */
 const cache = new Map();

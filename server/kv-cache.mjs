@@ -100,3 +100,48 @@ export async function kvSetMany(entries) {
   ]);
   await pipeline(commands);
 }
+
+/**
+ * Escreve e lê uma chave de teste, provando que o KV responde de verdade.
+ *
+ * `kvEnabled()` só diz que as env vars existem — e "env var presente" já se
+ * provou diferente de "funciona" (a chave da DeepL estava lá, sem quota). Como
+ * o cache falha em silêncio de propósito (nunca derrubar a tradução), sem este
+ * teste um KV mal configurado passaria despercebido, queimando quota.
+ *
+ * Vai direto ao endpoint (sem o warnOnce/engolir erro do pipeline), porque aqui
+ * o erro é justamente o que queremos ver.
+ */
+export async function kvSelfTest() {
+  const cfg = config();
+  if (!cfg) {
+    return { ok: false, reason: 'KV não configurado (sem KV_REST_API_URL/TOKEN)' };
+  }
+  const key = 'tr:selftest';
+  const value = `ping-${Date.now()}`;
+  try {
+    const res = await fetch(`${cfg.url}/pipeline`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${cfg.token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify([
+        ['SET', key, value, 'EX', '60'],
+        ['GET', key],
+      ]),
+      signal: AbortSignal.timeout(3000),
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      return { ok: false, status: res.status, detail: body.slice(0, 200) };
+    }
+    const out = await res.json();
+    const readBack = out?.[1]?.result;
+    return readBack === value
+      ? { ok: true, status: 200, roundTrip: 'escreveu e leu de volta' }
+      : { ok: false, status: 200, detail: `leitura inesperada: ${JSON.stringify(readBack)}` };
+  } catch (err) {
+    return { ok: false, status: null, detail: err?.message ?? String(err) };
+  }
+}
