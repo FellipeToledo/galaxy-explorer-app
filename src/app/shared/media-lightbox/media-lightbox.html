@@ -37,8 +37,10 @@
     <figcaption class="glass">
       <strong>{{ item().title | ct }}</strong>
       @if (item().dateCreated) {
+        <!-- 'UTC' pelo mesmo motivo do card: a data da API é UTC e o ano dela
+             precisa bater com o filtro de ano. -->
         <span class="fc-date">
-          {{ item().dateCreated | date: 'longDate' : undefined : translate.lang() }}
+          {{ item().dateCreated | date: 'longDate' : 'UTC' : translate.lang() }}
           @if (item().center) { · {{ item().center }} }
         </span>
       }

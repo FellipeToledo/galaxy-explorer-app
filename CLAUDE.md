@@ -148,6 +148,22 @@ src/app/
   (decisão do usuário). O que é compartilhado são os componentes:
   `shared/media-card` e `shared/media-lightbox` — **o CSS do card neon mora no
   media-card**, não duplicar no feature. Item = `NasaMedia` (`media.model.ts`).
+- **Anos do filtro da Mídia — medidos, não chutados**: varredura ano a ano no
+  acervo (`year_start=year_end`, termo genérico) → **`FIRST_YEAR = 1938`**, o
+  primeiro ano a partir do qual **nenhum ano fica vazio**. Antes dele há 25 anos
+  sem nada (1901–1937, com furos) e só curiosidades soltas (1 item em 1900, 1 em
+  1903, 1 em 1912). O valor antigo (1958, "Explorer 1") era palpite e **escondia
+  conteúdo real** — 1938–1957 têm de 3 a 90 itens por ano. O teto é o **ano
+  atual**: a API tem itens datados em 2027 e até 2030 ("Artemis II Water Deluge
+  Test"), mas são metadados errados. **Se for mexer no range, meça de novo** —
+  não chute.
+- **Datas do acervo são UTC** → `| date: … : 'UTC'` nos cards/lightbox. Em fuso
+  local, `1938-01-01T00:00Z` vira "31/12/1937" e o card mostra um ano diferente
+  do filtro selecionado (o Brasil é UTC−3). Mesmo motivo do EPIC.
+- **Anos vazios por termo são NORMAIS, não bug**: o filtro de ano é global e os
+  resultados dependem da busca — Perseverance não tem 2004–2016 (o rover nem
+  existia) e Opportunity não tem 2025–2026 (missão encerrada). Não tentar
+  "consertar" isso; a API não tem facets para anos por termo.
 - **Vídeos** (`media_type=video`): o link `render=image` do item é o frame de
   capa. Os arquivos vêm do `collection.json`: **`~orig.mp4` = 1,4 GB**,
   `~small` = 532 MB, **`~mobile` = 118 MB** (o menor → é o que tocamos).

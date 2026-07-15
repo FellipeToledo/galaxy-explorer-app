@@ -36,8 +36,19 @@ import { TranslateService } from '../../core/i18n/translate.service';
 
 /** Tamanho de página da NASA Image and Video Library. */
 const PAGE_SIZE = 100;
-/** Primeiro ano do acervo (Explorer 1, 1958). */
-const FIRST_YEAR = 1958;
+/**
+ * Primeiro ano do seletor — **medido no acervo**, não chutado.
+ *
+ * Varredura ano a ano (`year_start=year_end`, termo genérico): **1938 é o
+ * primeiro ano a partir do qual nenhum ano fica vazio**. Antes dele há 25 anos
+ * sem item nenhum (1901–1937, com furos) e só curiosidades soltas — 1 item em
+ * 1900, 1 em 1903 ("Early Rockets"), 1 em 1912 —, que só serviriam para
+ * oferecer anos que não retornam nada.
+ *
+ * O valor antigo (1958, "Explorer 1") era um palpite e escondia conteúdo real:
+ * os anos 1938–1957 têm de 3 a 90 itens cada.
+ */
+const FIRST_YEAR = 1938;
 const SUGGEST_DEBOUNCE_MS = 320;
 const SUGGEST_MIN_CHARS = 3;
 
@@ -103,6 +114,13 @@ export class MediaComponent implements OnInit {
   protected readonly year = signal<string>('');
   protected readonly sort = signal<SortMode>('relevance');
 
+  /**
+   * Anos do seletor: do atual até FIRST_YEAR.
+   *
+   * O teto é o ano atual **de propósito**: a API devolve itens datados em 2027
+   * e até 2030 ("Artemis II Water Deluge Test"), mas são metadados errados —
+   * oferecer anos futuros no filtro só confundiria.
+   */
   private readonly years = ((): string[] => {
     const now = new Date().getFullYear();
     const list: string[] = [];
