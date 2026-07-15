@@ -1,5 +1,6 @@
 import {
   Component,
+  DestroyRef,
   ElementRef,
   HostListener,
   OnInit,
@@ -7,10 +8,20 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subject, of } from 'rxjs';
+import {
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  switchMap,
+  tap,
+} from 'rxjs/operators';
 import { DatePipe } from '@angular/common';
 import { NasaApiService } from '../../core/services/nasa-api.service';
 import {
   NasaImage,
+  NasaImageAssets,
   ROVERS,
   RoverName,
   SORT_OPTIONS,
@@ -31,7 +42,15 @@ const PAGE_SIZE = 100;
 /** Primeiro ano com imagens de rovers em Marte (Spirit/Opportunity, 2004). */
 const FIRST_YEAR = 2004;
 
-/** Sugestões de busca (termos comuns/relevantes de Marte) para o autocomplete. */
+/** Espera antes de pedir sugestões — evita um request por tecla. */
+const SUGGEST_DEBOUNCE_MS = 320;
+/** Abaixo disso, sugestão da API é ruído: mostramos a lista curada. */
+const SUGGEST_MIN_CHARS = 3;
+
+/**
+ * Sugestões curadas — usadas com o campo vazio ou com termo muito curto (a API
+ * só entra a partir de 3 caracteres) e como rede de segurança se ela falhar.
+ */
 const SEARCH_SUGGESTIONS: string[] = [
   'Jezero Crater',
   'Gale Crater',
@@ -72,6 +91,7 @@ const SEARCH_SUGGESTIONS: string[] = [
 export class MarsComponent implements OnInit {
   private readonly api = inject(NasaApiService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly destroyRef = inject(DestroyRef);
   protected readonly translate = inject(TranslateService);
 
   protected readonly rovers = ROVERS;
@@ -120,8 +140,20 @@ export class MarsComponent implements OnInit {
   protected readonly searchQuery = signal('');
   protected readonly showSuggestions = signal(false);
   protected readonly suggestionIndex = signal(-1);
+  /** Sugestões vindas da API (vazio → cai na lista curada). */
+  private readonly apiSuggestions = signal<string[]>([]);
+  protected readonly suggestLoading = signal(false);
+
+  /** Termo digitado empurrado para o pipeline de sugestões (debounce). */
+  private readonly suggestTerm = new Subject<string>();
+
   protected readonly filteredSuggestions = computed<string[]>(() => {
     const q = this.searchQuery().toLowerCase().trim();
+    const fromApi = this.apiSuggestions();
+    if (q.length >= SUGGEST_MIN_CHARS && fromApi.length) {
+      return fromApi;
+    }
+    // Curadas: com campo vazio, termo curto ou quando a API não trouxe nada.
     const list = q
       ? SEARCH_SUGGESTIONS.filter(
           (s) => s.toLowerCase().includes(q) && s.toLowerCase() !== q,
@@ -151,9 +183,44 @@ export class MarsComponent implements OnInit {
 
   /** Imagem ampliada no lightbox (ou null). */
   protected readonly lightbox = signal<NasaImage | null>(null);
+  /** Assets em alta do item aberto; até chegarem, o lightbox usa o thumb. */
+  protected readonly lightboxAssets = signal<NasaImageAssets | null>(null);
+  protected readonly lightboxLoading = signal(false);
+
+  /** Melhor imagem disponível agora: a grande, ou o thumb enquanto carrega. */
+  protected readonly lightboxSrc = computed(
+    () => this.lightboxAssets()?.displayUrl ?? this.lightbox()?.thumbUrl ?? '',
+  );
 
   ngOnInit(): void {
     this.runRoverSearch();
+    this.watchSuggestions();
+  }
+
+  /**
+   * Pipeline das sugestões: espera o usuário parar de digitar, ignora termos
+   * curtos e **cancela o request anterior** (switchMap) — sem isso, respostas
+   * fora de ordem sobrescreveriam a sugestão do termo atual.
+   */
+  private watchSuggestions(): void {
+    this.suggestTerm
+      .pipe(
+        debounceTime(SUGGEST_DEBOUNCE_MS),
+        distinctUntilChanged(),
+        tap((term) => this.suggestLoading.set(term.length >= SUGGEST_MIN_CHARS)),
+        switchMap((term) => {
+          if (term.length < SUGGEST_MIN_CHARS) {
+            return of<string[]>([]);
+          }
+          // Erro aqui não pode quebrar a busca: cai na lista curada.
+          return this.api.suggest(term).pipe(catchError(() => of<string[]>([])));
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((list) => {
+        this.apiSuggestions.set(list);
+        this.suggestLoading.set(false);
+      });
   }
 
   protected selectRover(name: RoverName): void {
@@ -177,6 +244,7 @@ export class MarsComponent implements OnInit {
     this.searchQuery.set(value);
     this.showSuggestions.set(true);
     this.suggestionIndex.set(-1);
+    this.suggestTerm.next(value.trim());
   }
 
   /** Enter/botão de busca: dispara a busca com o termo digitado. */
@@ -321,9 +389,28 @@ export class MarsComponent implements OnInit {
 
   protected openLightbox(img: NasaImage): void {
     this.lightbox.set(img);
+    this.lightboxAssets.set(null);
+    if (!img.collectionUrl) {
+      return;
+    }
+    // Sob demanda: o thumb aparece na hora e a versão grande o substitui.
+    this.lightboxLoading.set(true);
+    this.api.getImageAssets(img.collectionUrl).subscribe({
+      next: (assets) => {
+        // Ignora se o usuário já fechou ou abriu outra imagem nesse meio-tempo.
+        if (this.lightbox()?.nasaId === img.nasaId) {
+          this.lightboxAssets.set(assets);
+        }
+        this.lightboxLoading.set(false);
+      },
+      // Falhou? Fica o thumb — o lightbox não pode quebrar por causa disso.
+      error: () => this.lightboxLoading.set(false),
+    });
   }
 
   protected closeLightbox(): void {
     this.lightbox.set(null);
+    this.lightboxAssets.set(null);
+    this.lightboxLoading.set(false);
   }
 }

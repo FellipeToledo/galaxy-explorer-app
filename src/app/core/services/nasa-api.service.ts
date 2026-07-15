@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AppConfigService } from '../config/app-config.service';
 import { Apod } from '../models/apod.model';
-import { NasaImage } from '../models/mars.model';
+import { NasaImage, NasaImageAssets } from '../models/mars.model';
 import { Neo } from '../models/neo.model';
 import { EpicImage } from '../models/epic.model';
 
@@ -18,6 +18,8 @@ interface ImageLibraryItem {
     center?: string;
   }[];
   links?: { href?: string; render?: string; rel?: string }[];
+  /** Aponta para o `collection.json` do item (lista os tamanhos). */
+  href?: string;
 }
 interface ImageLibraryResponse {
   collection?: { items?: ImageLibraryItem[] };
@@ -163,6 +165,83 @@ export class NasaApiService {
       .pipe(map((res) => this.mapImages(res)));
   }
 
+  /**
+   * Sugestões de busca em tempo real.
+   *
+   * A Image Library não tem endpoint de autocomplete → usamos a própria busca
+   * e extraímos palavras-chave dos títulos dos primeiros resultados. Cabe ao
+   * chamador aplicar debounce e cancelamento (switchMap).
+   */
+  suggest(term: string, limit = 8): Observable<string[]> {
+    const params = new HttpParams()
+      .set('q', term)
+      .set('media_type', 'image')
+      .set('page_size', '30');
+    return this.http
+      .get<ImageLibraryResponse>(`${this.imageBase}/search`, { params })
+      .pipe(map((res) => this.titlesToSuggestions(res, term, limit)));
+  }
+
+  /** Títulos → sugestões curtas, sem repetir e sem devolver o próprio termo. */
+  private titlesToSuggestions(
+    res: ImageLibraryResponse,
+    term: string,
+    limit: number,
+  ): string[] {
+    const lower = term.toLowerCase().trim();
+    const seen = new Set<string>();
+    const out: string[] = [];
+
+    for (const item of res.collection?.items ?? []) {
+      const title = item.data?.[0]?.title?.trim();
+      if (!title) {
+        continue;
+      }
+      // Títulos da NASA são longos e às vezes frases inteiras ("Have a Nice
+      // Spring! MOC Revisits…") — corta na primeira pontuação forte.
+      const clean = title.split(/[,;:(!?–—"]/)[0].trim().slice(0, 60);
+      const key = clean.toLowerCase();
+      if (!clean || key === lower || seen.has(key)) {
+        continue;
+      }
+      seen.add(key);
+      out.push(clean);
+      if (out.length >= limit) {
+        break;
+      }
+    }
+    return out;
+  }
+
+  /**
+   * Tamanhos disponíveis de um item, a partir do seu `collection.json`.
+   * Chamado sob demanda (lightbox) — são ~100 itens por página, buscar isso
+   * para todos seria absurdo.
+   */
+  getImageAssets(collectionUrl: string): Observable<NasaImageAssets> {
+    return this.http.get<string[]>(collectionUrl).pipe(
+      map((urls) => {
+        const list = (urls ?? []).map((u) => this.forceHttps(u));
+        const pick = (suffix: string) =>
+          list.find((u) => u.includes(`~${suffix}.`));
+        // Nem todo item traz todos os tamanhos: os antigos (PIA*) costumam ter
+        // só ~orig e ~thumb. Por isso a cadeia inteira, do melhor equilíbrio
+        // (~large, ~280 KB) até o ~orig, que pode passar de 10 MB e fica por
+        // último — mas ainda é melhor que exibir o thumbnail esticado.
+        return {
+          displayUrl:
+            pick('large') ?? pick('medium') ?? pick('small') ?? pick('orig'),
+          originalUrl: pick('orig'),
+        };
+      }),
+    );
+  }
+
+  /** O manifest devolve URLs em http:// — numa página https vira mixed content. */
+  private forceHttps(url: string): string {
+    return url.startsWith('http://') ? 'https://' + url.slice(7) : url;
+  }
+
   // ── NeoWs — Near Earth Object Web Service ───────────────────────────────
   /**
    * Asteroides com aproximação da Terra entre duas datas (YYYY-MM-DD).
@@ -231,6 +310,7 @@ export class NasaApiService {
           dateCreated: data.date_created,
           center: data.center,
           thumbUrl,
+          collectionUrl: item.href,
         };
       })
       .filter((x): x is NasaImage => x !== null);

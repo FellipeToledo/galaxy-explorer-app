@@ -26,6 +26,14 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
 
     // Comum
     'common.retry': 'Tentar novamente',
+    'common.translating': 'traduzindo…',
+
+    // Títulos das abas (resolvidos pelo AppTitleStrategy)
+    'app.name': 'Galaxy Explorer',
+    'title.apod': 'Foto do Dia',
+    'title.mars': 'Marte',
+    'title.asteroids': 'Asteroides',
+    'title.earth': 'Terra',
 
     // APOD
     'apod.eyebrow': 'NASA · Foto Astronômica do Dia',
@@ -63,6 +71,8 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'mars.cardFallbackDesc': 'Imagem do acervo da NASA.',
     'mars.viewImage': 'Ver imagem →',
     'mars.close': 'Fechar',
+    'mars.loadingHd': 'carregando alta resolução…',
+    'mars.viewOriginal': 'Ver original em tamanho máximo ↗',
 
     // Terra (EPIC)
     'earth.eyebrow': 'NASA · EPIC — DSCOVR, do ponto L1',
@@ -156,6 +166,14 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
 
     // Common
     'common.retry': 'Try again',
+    'common.translating': 'translating…',
+
+    // Tab titles (resolved by AppTitleStrategy)
+    'app.name': 'Galaxy Explorer',
+    'title.apod': 'Picture of the Day',
+    'title.mars': 'Mars',
+    'title.asteroids': 'Asteroids',
+    'title.earth': 'Earth',
 
     // APOD
     'apod.eyebrow': 'NASA · Astronomy Picture of the Day',
@@ -193,6 +211,8 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'mars.cardFallbackDesc': "Image from NASA's archive.",
     'mars.viewImage': 'View image →',
     'mars.close': 'Close',
+    'mars.loadingHd': 'loading high resolution…',
+    'mars.viewOriginal': 'View original at full size ↗',
 
     // Earth (EPIC)
     'earth.eyebrow': 'NASA · EPIC — DSCOVR, from the L1 point',

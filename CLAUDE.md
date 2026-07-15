@@ -51,7 +51,8 @@ proxy.conf.json             # dev: /api → localhost:3001
 src/app/
 ├── core/
 │   ├── i18n/               # TranslateService (UI), ContentTranslateService
-│   │                       # (conteúdo da API), pipes `t` e `ct`, dicionários
+│   │                       # (conteúdo da API), pipes `t` e `ct`, dicionários,
+│   │                       # title.strategy.ts (título da aba por idioma)
 │   ├── models/             # apod.model.ts, mars.model.ts (+ SortMode etc.)
 │   └── services/nasa-api.service.ts  # HttpClient central (chave via environment)
 ├── features/
@@ -64,6 +65,7 @@ src/app/
 ├── shared/
 │   ├── starfield/          # fundo de estrelas em <canvas> (fora da zona)
 │   ├── navbar/             # navegação + seletor de idioma
+│   ├── translating/        # chip "traduzindo…" (global, lê o ContentTranslate)
 │   ├── glass-select/       # dropdown glass reutilizável (teclado, aria)
 │   ├── in-view/            # IntersectionObserver → classe .in-view
 │   └── scroll-end/         # IntersectionObserver → output scrolled (infinite)
@@ -137,6 +139,20 @@ src/app/
 - Dropdowns/autocomplete: reutilizar `GlassSelectComponent` e o padrão de
   sugestões do Marte; containers de filtros precisam de `position:relative` +
   `z-index` acima do grid.
+- **NUNCA escrever em signal durante o render** (`NG0600`): o pipe `ct` chama
+  `ContentTranslateService.translate()` **dentro da renderização**, então
+  qualquer `signal.set/update` no caminho dele quebra a detecção de mudanças —
+  a tela sai pela metade (foi assim que o lightbox ficou sem `src`). O contador
+  do indicador usa `bump()` com `queueMicrotask`. Vale para qualquer estado
+  novo que o `ct` venha a tocar.
+- **Assets da Image Library** (`collection.json`, via `href` do item da busca —
+  não montar URL na mão): **nem todo item tem todos os tamanhos** — os antigos
+  (`PIA*`) só têm `~orig` e `~thumb`. Daí a cadeia
+  `large → medium → small → orig` em `getImageAssets()`. `~large` ≈ 280 KB é o
+  alvo; **`~orig` passa de 10 MB** e por isso é só link ("ver original"), nunca
+  exibido — mesmo padrão do PNG no EPIC. O manifest devolve URLs em **http://**
+  → `forceHttps()`, senão é mixed content bloqueado em produção. Buscado **sob
+  demanda** no lightbox: são 100 itens por página.
 - Verificação de layout com alturas uniformes: reservar linhas com
   `-webkit-line-clamp` + `min-height`.
 - **Asteroides (NeoWs)**: `GET {base}/neo/rest/v1/feed?start_date&end_date`
@@ -171,15 +187,8 @@ Novas seções:
       própria (reusar cards + autocomplete + scroll infinito).
 
 Melhorias no que já existe:
-- [ ] **Título da aba (rota) i18n** — hoje fixo em pt-BR; criar um
-      `TitleStrategy` que troca com o idioma.
-- [ ] **Autocomplete dinâmico** — sugestões vindas da API em tempo real
-      (com debounce) em vez da lista curada atual.
-- [ ] **Alta resolução** no lightbox — usar o asset manifest da Image Library
-      (`collection.json`) para a imagem full-res; hoje usa o thumbnail.
 - [ ] **Filtro por câmera** no Marte (estava no plano inicial da API antiga;
       reavaliar viabilidade com a Image Library).
-- [ ] **Indicador "traduzindo…"** enquanto o DeepL/pacote processa o conteúdo.
 - [ ] **Vídeos** (media_type=video) na busca de mídia.
 - [ ] **Nomes de asteroide no `ct`?** — hoje `name` e datas do NeoWs não passam
       pela tradução de conteúdo (são designações, não prosa). Reavaliar só se
@@ -214,6 +223,11 @@ glass-select, autocomplete, cards neon, deploy Vercel + serverless,
 dispersão distância×tamanho e tabela — tudo i18n nos 2 idiomas.
 **🌍 Terra (EPIC)**: rota `/earth`, seletor de data, disco em JPG com halo,
 slider temporal com play/pause/anterior/próximo e pré-carregamento dos quadros.
+**Melhorias**: `AppTitleStrategy` (título da aba segue o idioma — as rotas
+guardam a **chave**, não o texto), indicador "traduzindo…"
+(`shared/translating/`), alta resolução no lightbox via `collection.json` e
+autocomplete dinâmico no Marte (debounce 320ms, mín. 3 chars, `switchMap`
+cancelando o anterior; curadas como fallback).
 
 ## Histórico essencial (para contexto)
 

@@ -14,6 +14,20 @@ export interface NasaImage {
   dateCreated?: string;
   center?: string;
   thumbUrl: string;
+  /**
+   * `collection.json` do item — lista os tamanhos disponíveis (~orig, ~large,
+   * ~medium…). Buscado sob demanda ao abrir o lightbox, que antes exibia o
+   * thumbnail esticado.
+   */
+  collectionUrl?: string;
+}
+
+/** Assets de um item, resolvidos a partir do `collection.json`. */
+export interface NasaImageAssets {
+  /** ~large (~280 KB): o que o lightbox exibe. */
+  displayUrl?: string;
+  /** ~orig: pode passar de 10 MB → só link, nunca exibido. */
+  originalUrl?: string;
 }
 
 export type RoverName = 'perseverance' | 'curiosity' | 'opportunity' | 'spirit';

@@ -6,7 +6,7 @@ import {
   provideBrowserGlobalErrorListeners,
   provideZoneChangeDetection,
 } from '@angular/core';
-import { provideRouter, withInMemoryScrolling } from '@angular/router';
+import { TitleStrategy, provideRouter, withInMemoryScrolling } from '@angular/router';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { registerLocaleData } from '@angular/common';
 import localePt from '@angular/common/locales/pt';
@@ -14,6 +14,7 @@ import localeEn from '@angular/common/locales/en';
 
 import { routes } from './app.routes';
 import { AppConfigService } from './core/config/app-config.service';
+import { AppTitleStrategy } from './core/i18n/title.strategy';
 
 // Dados de locale para o DatePipe (formatação de datas por idioma).
 registerLocaleData(localePt, 'pt-BR');
@@ -29,6 +30,8 @@ export const appConfig: ApplicationConfig = {
     ),
     provideHttpClient(withFetch()),
     { provide: LOCALE_ID, useValue: 'pt-BR' },
+    // Título da aba acompanha o idioma (chaves em app.routes.ts).
+    { provide: TitleStrategy, useClass: AppTitleStrategy },
     // Carrega config.json (chave da NASA etc.) antes de iniciar o app.
     provideAppInitializer(() => inject(AppConfigService).load()),
   ],

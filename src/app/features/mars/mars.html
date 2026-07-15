@@ -36,7 +36,13 @@
           [placeholder]="'mars.searchPlaceholder' | t"
           [attr.aria-label]="'mars.searchAria' | t"
         />
-        <button type="submit" class="chip search-btn" [attr.aria-label]="'mars.searchAria' | t">🔍</button>
+        <button type="submit" class="chip search-btn" [attr.aria-label]="'mars.searchAria' | t">
+          @if (suggestLoading()) {
+            <span class="mini-spinner" aria-hidden="true"></span>
+          } @else {
+            🔍
+          }
+        </button>
       </form>
 
       @if (showSuggestions() && filteredSuggestions().length > 0) {
@@ -150,7 +156,11 @@
   <div class="lightbox" (click)="closeLightbox()">
     <button class="close" (click)="closeLightbox()" [attr.aria-label]="'mars.close' | t">✕</button>
     <figure (click)="$event.stopPropagation()">
-      <img [src]="img.thumbUrl" [alt]="img.title" />
+      <!-- Começa no thumb e troca pela versão grande quando o manifest chega -->
+      <img [src]="lightboxSrc()" [alt]="img.title" />
+      @if (lightboxLoading()) {
+        <span class="hd-loading">{{ 'mars.loadingHd' | t }}</span>
+      }
       <figcaption class="glass">
         <strong>{{ img.title | ct }}</strong>
         @if (img.dateCreated) {
@@ -160,6 +170,11 @@
         }
         @if (img.description) {
           <span class="fc-desc">{{ img.description | ct }}</span>
+        }
+        @if (lightboxAssets()?.originalUrl; as orig) {
+          <a class="fc-orig" [href]="orig" target="_blank" rel="noopener">
+            {{ 'mars.viewOriginal' | t }}
+          </a>
         }
       </figcaption>
     </figure>
