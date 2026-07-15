@@ -160,6 +160,12 @@ src/app/
 - **Datas do acervo são UTC** → `| date: … : 'UTC'` nos cards/lightbox. Em fuso
   local, `1938-01-01T00:00Z` vira "31/12/1937" e o card mostra um ano diferente
   do filtro selecionado (o Brasil é UTC−3). Mesmo motivo do EPIC.
+- **`q` é OPCIONAL na Image Library**: `year_start`/`year_end`/`media_type`
+  funcionam sozinhos (só ano → milhares de itens). Por isso, na Mídia, **mexer
+  num filtro busca mesmo sem termo** (`rerunSearch()` não checa `currentTerm`) e
+  o botão com campo vazio navega pelo acervo. Antes, filtrar sem ter buscado não
+  fazia nada e parecia quebrado. `q=*` devolve **zero** — não usar como
+  "curinga"; o certo é omitir o parâmetro.
 - **Anos vazios por termo são NORMAIS, não bug**: o filtro de ano é global e os
   resultados dependem da busca — Perseverance não tem 2004–2016 (o rover nem
   existia) e Opportunity não tem 2025–2026 (missão encerrada). Não tentar

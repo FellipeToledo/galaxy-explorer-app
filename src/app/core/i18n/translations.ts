@@ -97,7 +97,8 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'media.error':
       'Não foi possível buscar no acervo. Verifique sua conexão e tente novamente.',
     'media.invite': 'Busque no acervo da NASA.',
-    'media.inviteHint': 'Digite um termo acima ou escolha uma das sugestões.',
+    'media.inviteHint':
+      'Digite um termo, escolha uma sugestão — ou filtre por tipo e ano para navegar pelo acervo.',
     'media.empty': '🛰️ Nenhum resultado.',
     'media.emptyHint': 'Tente outro termo, outro tipo ou outro ano.',
     'media.count': '{{count}} item(ns)',
@@ -275,7 +276,8 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'media.error':
       'Could not search the archive. Check your connection and try again.',
     'media.invite': "Search NASA's archive.",
-    'media.inviteHint': 'Type a term above or pick one of the suggestions.',
+    'media.inviteHint':
+      'Type a term, pick a suggestion — or filter by type and year to browse the archive.',
     'media.empty': '🛰️ No results.',
     'media.emptyHint': 'Try another term, type, or year.',
     'media.count': '{{count}} item(s)',
