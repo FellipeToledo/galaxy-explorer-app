@@ -113,7 +113,10 @@
               <span class="card-info">
                 <span class="card-brand">{{ 'mars.cardBrand' | t }}</span>
                 <span class="card-name">{{ img.title | ct }}</span>
-                <span class="card-desc">{{ img.description ? (img.description | ct) : ('mars.cardFallbackDesc' | t) }}</span>
+                <!-- ct: 160 → o card corta em 2 linhas; traduzir os ~615 chars
+                     inteiros da NASA queimaria a quota com texto invisível.
+                     O lightbox traduz a descrição completa. -->
+                <span class="card-desc">{{ img.description ? (img.description | ct: 160) : ('mars.cardFallbackDesc' | t) }}</span>
                 <span class="card-meta">
                   <span class="card-date">
                     {{ img.dateCreated ? (img.dateCreated | date: 'mediumDate' : undefined : translate.lang()) : '' }}

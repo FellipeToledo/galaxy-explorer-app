@@ -101,6 +101,16 @@ src/app/
   Free (`api-free.deepl.com`); sem `:fx` é Pro (`api.deepl.com`). Host errado →
   **403**, que se disfarça de "chave inválida". `deeplEndpoint()` escolhe pelo
   formato da chave; `DEEPL_API_URL` força manualmente (aí `urlOverridden`).
+- **Quota do DeepL free = 500k chars/mês — e ela ESTOUROU uma vez.** Medido com
+  dados reais: 1 página do Marte (100 cards) = **65.676 chars** (descrição média
+  615), ou seja **7,6 páginas/mês**. Duas defesas, não re-litigar:
+  1. `| ct: 160` nos textos que a UI já corta (card do Marte tem
+     `line-clamp: 2`): manda só o visível → 19.812 chars/página (**−70%**).
+     O lightbox usa `| ct` sem limite (traduz completo, sob demanda). O corte é
+     na fronteira de palavra (`clip()`), senão a tradução sai ruim.
+     **Regra: texto com `line-clamp`/truncado na UI → sempre `ct` com limite.**
+  2. Cache **KV** (L2): sem ele, todo cold start re-traduz tudo do zero.
+  Sintoma de quota estourada: `/api/translate` → 502 com `upstream: 456`.
 - **Diagnóstico da tradução**: `/api/health` mostra `provider`, `cache` e o bloco
   `deepl` (`keyKind`, `host`, `endpointMatchesKey`, **sem expor a chave**);
   `/api/health?check=deepl` **chama a API de verdade** e reporta o status — env

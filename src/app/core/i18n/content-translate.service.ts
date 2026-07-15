@@ -46,11 +46,37 @@ export class ContentTranslateService {
     return this.ui.lang() === 'pt-BR' ? 'pt' : null;
   }
 
-  /** Tradução em cache ou original; agenda a tradução quando faltar. */
-  translate(text: string): string {
+  /**
+   * Encurta o texto antes de mandar traduzir.
+   *
+   * As descrições da NASA têm ~615 chars, mas o card mostra 2 linhas
+   * (`-webkit-line-clamp`) — traduzir o resto é pagar por texto que ninguém lê,
+   * e a quota free da DeepL (500k/mês) morria em ~8 páginas do Marte. O corte
+   * é na fronteira de palavra: um texto cortado no meio traduz mal.
+   */
+  private clip(text: string, maxLength: number): string {
+    if (text.length <= maxLength) {
+      return text;
+    }
+    const cut = text.slice(0, maxLength);
+    const lastSpace = cut.lastIndexOf(' ');
+    // Sem espaço perto do fim (palavra gigante/CJK): corta seco mesmo.
+    return (lastSpace > maxLength * 0.6 ? cut.slice(0, lastSpace) : cut) + '…';
+  }
+
+  /**
+   * Tradução em cache ou original; agenda a tradução quando faltar.
+   *
+   * `maxLength` limita o que vai para a API — use nos textos que a UI já corta.
+   * Sem ele, traduz o texto inteiro (lightbox, explicação do APOD…).
+   */
+  translate(text: string, maxLength?: number): string {
     const target = this.target();
     if (!target || !text?.trim()) {
       return text;
+    }
+    if (maxLength && maxLength > 0) {
+      text = this.clip(text, maxLength);
     }
     const key = `${target}::${text}`;
     const cached = this.cache.get(key);

@@ -75,6 +75,13 @@ npm run dev        # sobe o Angular (com proxy /api) + o servidor de tradução
 
 - Sem chave, o proxy devolve o texto original (o app continua funcionando).
 - Para testar o fluxo sem chave: `TRANSLATE_MOCK=1 npm run server`.
+- **Quota (free = 500k chars/mês)**: o pipe aceita um limite — `{{ texto | ct: 160 }}`
+  manda só os primeiros 160 caracteres. Use nos textos que a UI já corta (os
+  cards do Marte têm `line-clamp: 2`): traduzir os ~615 chars completos de cada
+  descrição gastava a quota com texto que ninguém vê — 1 página do Marte custava
+  65k chars, e o mês inteiro cabia em 7,6 páginas. O lightbox usa `| ct` sem
+  limite e traduz o texto completo, sob demanda.
+  Quota estourada = `502` com `"upstream": 456`.
 - **Free x Pro**: a DeepL tem dois hosts. Chaves da conta Free terminam em
   `:fx` e falam com `api-free.deepl.com`; as Pro, com `api.deepl.com`. O host é
   escolhido pelo formato da chave — host errado devolve **403**, que parece
