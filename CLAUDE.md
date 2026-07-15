@@ -41,6 +41,7 @@ npm run build    # build de produção (dist/galaxy-explorer/browser)
 ## Arquitetura
 
 ```text
+scripts/generate-config.mjs # build: NASA_API_KEY (env) → public/config.json
 server/translate-core.mjs   # núcleo de tradução (DeepL + cache), compartilhado
 server/kv-cache.mjs         # cache durável opcional (KV via REST, sem deps)
 server/index.mjs            # proxy local de dev (Node puro, sem deps)
@@ -81,6 +82,14 @@ src/app/
   `public/config.json` (**gitignored**; ex.: `public/config.example.json`).
   A chave do dev vai no `config.json` — **NUNCA editar `environment.ts` nem
   commitar chaves**. Serviços leem de `AppConfigService`, não do environment.
+  **Em produção o `config.json` é gerado no build** por
+  `scripts/generate-config.mjs` (`npm run build`) a partir da env var
+  `NASA_API_KEY` da Vercel. Sem isso a produção caía em `DEMO_KEY` → **429**
+  em APOD/Asteroides/Terra, e **só Marte funcionava** (Image Library não exige
+  chave) — se o sintoma voltar, **é a env var**, não o código. Regras do script:
+  sem `NASA_API_KEY` ele **não toca** num `config.json` existente (não destrói o
+  do dev); com a env var, **o ambiente vence** o conteúdo do arquivo (senão um
+  `DEMO_KEY` velho recriaria o bug); nunca loga a chave (log de build é visível).
 - **i18n**: solução própria leve. UI via dicionários (`translations.ts`,
   pt-BR default + en-US) + pipe impuro `t`; datas com locale dinâmico
   (`| date: 'longDate' : undefined : translate.lang()`). Conteúdo dinâmico da
@@ -170,6 +179,11 @@ Infra:
 - [ ] Marcar `DEEPL_API_KEY` também no ambiente **Preview** (hoje só garantida
       em Production; sem ela os previews caem no texto original). Documentado no
       README — **ação do usuário** no painel da Vercel.
+- [ ] **Definir `NASA_API_KEY` na Vercel** (Production **e** Preview) e redeploy.
+      O código já está pronto; **sem isso a produção segue em DEMO_KEY → 429**
+      em APOD/Asteroides/Terra. Precisa de uma chave gratuita de
+      https://api.nasa.gov/ — **só o usuário pode criar**. Conferir depois que
+      `/config.json` do site publicado não traz `DEMO_KEY`.
 
 Concluídos (referência): i18n UI (pt-BR/en), tradução de conteúdo (DeepL +
 fallback navegador/original), scroll infinito, filtros fiéis (ano+ordenação),
