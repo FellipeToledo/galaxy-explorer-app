@@ -9,7 +9,10 @@
     "test": "ng test",
     "server": "node --env-file-if-exists=.env server/index.mjs",
     "dev": "concurrently -n web,api -c cyan,magenta \"ng serve\" \"npm run server\"",
-    "config:generate": "node scripts/generate-config.mjs"
+    "config:generate": "node scripts/generate-config.mjs",
+    "test:server": "node --test server/*.test.mjs",
+    "test:ci": "ng test --watch=false --browsers=ChromeHeadless",
+    "test:all": "npm run test:server && npm run test:ci"
   },
   "prettier": {
     "printWidth": 100,

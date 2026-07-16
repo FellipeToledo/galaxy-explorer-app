@@ -172,6 +172,23 @@ curl https://<seu-app>.vercel.app/api/health
 > Se o KV estiver fora do ar ou mal configurado, a tradução **não quebra**: o
 > núcleo avisa no log e segue direto para o DeepL.
 
+## 🧪 Testes
+
+```bash
+npm run test:all     # tudo (é o que o CI roda)
+npm run test:server  # só o backend de tradução — node --test, sem deps
+npm run test:ci      # só o front — Karma/Jasmine headless
+npm test             # front em modo watch, durante o desenvolvimento
+```
+
+Os testes cobrem as regras que **não são óbvias no código** e que só
+descobrimos medindo a API: o corte de 160 chars que segura a quota da DeepL, a
+escolha do host Free×Pro, o mapeamento do feed do NeoWs (que repete todas as
+aproximações de cada objeto), a cadeia de tamanhos da Image Library e o ajuste
+para a data válida mais próxima no EPIC.
+
+O CI (`.github/workflows/ci.yml`) roda testes e build em cada PR.
+
 ## 🧱 Arquitetura
 
 ```
