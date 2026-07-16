@@ -24,4 +24,9 @@ export const environment = {
    * navegador (on-device) como fallback. Veja server/index.mjs.
    */
   translateApiUrl: '/api/translate',
+  /**
+   * Proxy do NASA Exoplanet Archive. Não dá para apontar o front direto para
+   * o arquivo: ele não manda CORS (ver server/exoplanets-core.mjs).
+   */
+  exoplanetsApiUrl: '/api/exoplanets',
 };

@@ -135,6 +135,22 @@ circle.dim {
   opacity: 0.35;
 }
 
+/* Referência do Sistema Solar: nunca esmaece (é o ponto de comparação) e o
+   anel mais grosso a separa do enxame de pontos atrás. */
+.ref-dot {
+  stroke-width: 2.5;
+  opacity: 1;
+}
+
+.ref-label {
+  fill: var(--text);
+  font-size: 10px;
+  font-weight: 600;
+  paint-order: stroke;
+  stroke: var(--chart-surface);
+  stroke-width: 3px; /* contorno: o rótulo cai sobre os pontos */
+}
+
 /* Alvos de hover/foco: invisíveis e maiores que a marca */
 .hit {
   fill: transparent;

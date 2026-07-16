@@ -1,0 +1,58 @@
+<figure class="chart">
+  <figcaption>
+    <span class="chart-title">{{ 'exo.chartYears.title' | t }}</span>
+    <span class="chart-sub">{{ 'exo.chartYears.sub' | t }}</span>
+  </figcaption>
+
+  <div class="plot">
+    <!-- role=group: com role="img" o leitor ignoraria as colunas focáveis -->
+    <svg
+      [attr.viewBox]="'0 0 ' + viewW + ' ' + viewH"
+      role="group"
+      [attr.aria-label]="'exo.chartYears.aria' | t"
+    >
+      @for (tick of yTicks(); track tick.value) {
+        <line class="grid" x1="46" [attr.y1]="tick.y" [attr.x2]="viewW - 14" [attr.y2]="tick.y" />
+        <text class="tick" x="38" [attr.y]="tick.y + 4" text-anchor="end">{{ tick.value }}</text>
+      }
+      <line class="axis" x1="46" [attr.y1]="plotBottom" [attr.x2]="viewW - 14" [attr.y2]="plotBottom" />
+
+      @for (col of columns(); track col.year) {
+        <g>
+          <path [attr.d]="col.path" class="safe" />
+          @if (col.labelValue) {
+            <text class="cap-label" [attr.x]="col.centerX" [attr.y]="col.topY - 8" text-anchor="middle">
+              {{ col.labelValue }}
+            </text>
+          }
+          @if (col.showTick) {
+            <text class="tick" [attr.x]="col.centerX" [attr.y]="plotBottom + 20" text-anchor="middle">
+              {{ col.year }}
+            </text>
+          }
+          <rect
+            class="hit"
+            tabindex="0"
+            role="img"
+            [attr.aria-label]="'exo.chartYears.yearAria' | t: { year: col.year, count: col.n }"
+            [attr.x]="col.hitX"
+            y="18"
+            [attr.width]="col.hitW"
+            [attr.height]="plotBottom - 18"
+            (mouseenter)="hover(col)"
+            (mouseleave)="hover(null)"
+            (focus)="hover(col)"
+            (blur)="hover(null)"
+          />
+        </g>
+      }
+    </svg>
+
+    @if (hovered(); as col) {
+      <div class="tooltip" [style.left.%]="tipLeft()" [style.top.%]="tipTop()" role="status">
+        <strong>{{ col.year }}</strong>
+        <span>{{ 'exo.chartYears.count' | t: { count: col.n } }}</span>
+      </div>
+    }
+  </div>
+</figure>

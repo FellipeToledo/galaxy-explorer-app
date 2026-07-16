@@ -45,7 +45,7 @@ interface Column {
   standalone: true,
   imports: [DatePipe, TranslatePipe],
   templateUrl: './neo-bars.html',
-  styleUrl: './charts.scss',
+  styleUrl: '../../../shared/charts/charts.scss',
 })
 export class NeoBarsComponent {
   protected readonly translate = inject(TranslateService);
