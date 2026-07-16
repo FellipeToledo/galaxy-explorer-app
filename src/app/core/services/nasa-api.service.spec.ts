@@ -4,8 +4,67 @@ import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
-import { NasaApiService } from './nasa-api.service';
+import { NasaApiService, splitDateRange } from './nasa-api.service';
 import { AppConfigService } from '../config/app-config.service';
+
+/**
+ * O feed do NeoWs recusa mais de 7 dias (400 BAD_REQUEST), então períodos
+ * maiores são fatiados. É aritmética de data: erro de ±1 dia aqui vira dia
+ * faltando no gráfico, sem barulho nenhum.
+ */
+describe('splitDateRange', () => {
+  it('período dentro do limite fica em uma janela só', () => {
+    expect(splitDateRange('2026-01-01', '2026-01-07', 7)).toEqual([
+      ['2026-01-01', '2026-01-07'], // 7 dias: inclusivo nas duas pontas
+    ]);
+  });
+
+  it('um único dia', () => {
+    expect(splitDateRange('2026-01-01', '2026-01-01', 7)).toEqual([
+      ['2026-01-01', '2026-01-01'],
+    ]);
+  });
+
+  it('8 dias já viram duas janelas (o limite é 7)', () => {
+    expect(splitDateRange('2026-01-01', '2026-01-08', 7)).toEqual([
+      ['2026-01-01', '2026-01-07'],
+      ['2026-01-08', '2026-01-08'],
+    ]);
+  });
+
+  it('30 dias viram 5 janelas, sem furo nem sobreposição', () => {
+    const j = splitDateRange('2026-01-01', '2026-01-30', 7);
+    expect(j.length).toBe(5);
+    expect(j[0]).toEqual(['2026-01-01', '2026-01-07']);
+    expect(j.at(-1)).toEqual(['2026-01-29', '2026-01-30']);
+    // cada janela começa no dia seguinte ao fim da anterior
+    for (let i = 1; i < j.length; i++) {
+      const anterior = Date.parse(j[i - 1][1] + 'T00:00:00Z');
+      const atual = Date.parse(j[i][0] + 'T00:00:00Z');
+      expect(atual - anterior).toBe(86_400_000);
+    }
+    // nenhuma janela passa do limite da API
+    for (const [a, b] of j) {
+      const dias = (Date.parse(b) - Date.parse(a)) / 86_400_000 + 1;
+      expect(dias).toBeLessThanOrEqual(7);
+    }
+  });
+
+  it('atravessa a virada de mês e de ano', () => {
+    const j = splitDateRange('2025-12-28', '2026-01-05', 7);
+    expect(j).toEqual([
+      ['2025-12-28', '2026-01-03'],
+      ['2026-01-04', '2026-01-05'],
+    ]);
+  });
+
+  it('datas invertidas ou inválidas não travam (devolve como veio)', () => {
+    expect(splitDateRange('2026-01-10', '2026-01-01', 7)).toEqual([
+      ['2026-01-10', '2026-01-01'],
+    ]);
+    expect(splitDateRange('xx', 'yy', 7)).toEqual([['xx', 'yy']]);
+  });
+});
 
 /**
  * Testes das regras que só descobrimos MEDINDO a API — as mesmas do
@@ -246,6 +305,73 @@ describe('NasaApiService', () => {
         },
       });
       expect(out).toEqual([]);
+    });
+
+    it('uid junta id e data (o mesmo objeto pode ter 2 aproximações)', () => {
+      let out: any[] = [];
+      api.getNeoFeed('2026-01-01', '2026-01-02').subscribe((r) => (out = r));
+      const obj = (dia: string, km: string) => ({
+        id: 'mesmo-id',
+        name: 'Repetido',
+        estimated_diameter: { meters: { estimated_diameter_min: 1, estimated_diameter_max: 2 } },
+        close_approach_data: [
+          { close_approach_date: dia, miss_distance: { kilometers: km, lunar: '1' }, relative_velocity: { kilometers_per_hour: '1' } },
+        ],
+      });
+      http.expectOne((r) => r.url === `${BASE}/neo/rest/v1/feed`).flush({
+        near_earth_objects: {
+          '2026-01-01': [obj('2026-01-01', '100')],
+          '2026-01-02': [obj('2026-01-02', '200')],
+        },
+      });
+      expect(out.length).toBe(2);
+      // o id repete, o uid não: é o que segura o track do @for
+      expect(out[0].id).toBe(out[1].id);
+      expect(out[0].uid).not.toBe(out[1].uid);
+      expect(out.map((n) => n.uid)).toEqual(['mesmo-id@2026-01-01', 'mesmo-id@2026-01-02']);
+    });
+
+    describe('períodos acima de 7 dias', () => {
+      it('fatia em várias chamadas e junta tudo numa lista só', () => {
+        let out: any[] = [];
+        api.getNeoFeed('2026-01-01', '2026-01-14').subscribe((r) => (out = r));
+
+        const reqs = http.match((r) => r.url === `${BASE}/neo/rest/v1/feed`);
+        expect(reqs.length).withContext('14 dias = 2 janelas').toBe(2);
+        expect(reqs[0].request.params.get('start_date')).toBe('2026-01-01');
+        expect(reqs[0].request.params.get('end_date')).toBe('2026-01-07');
+        expect(reqs[1].request.params.get('start_date')).toBe('2026-01-08');
+        expect(reqs[1].request.params.get('end_date')).toBe('2026-01-14');
+
+        const neo = (id: string, dia: string, km: string) => ({
+          id,
+          name: id,
+          estimated_diameter: { meters: { estimated_diameter_min: 1, estimated_diameter_max: 2 } },
+          close_approach_data: [
+            { close_approach_date: dia, miss_distance: { kilometers: km, lunar: '1' }, relative_velocity: { kilometers_per_hour: '1' } },
+          ],
+        });
+        reqs[0].flush({ near_earth_objects: { '2026-01-02': [neo('semana1', '2026-01-02', '5000')] } });
+        reqs[1].flush({ near_earth_objects: { '2026-01-09': [neo('semana2', '2026-01-09', '900')] } });
+
+        expect(out.length).toBe(2);
+        // ordena o conjunto TODO por distância, não cada janela isolada
+        expect(out.map((n) => n.id)).toEqual(['semana2', 'semana1']);
+      });
+
+      it('uma janela que falha derruba o período (nada de gráfico com buraco)', () => {
+        let erro: unknown = null;
+        let out: any[] | null = null;
+        api.getNeoFeed('2026-01-01', '2026-01-14').subscribe({
+          next: (r) => (out = r),
+          error: (e) => (erro = e),
+        });
+        const reqs = http.match((r) => r.url === `${BASE}/neo/rest/v1/feed`);
+        reqs[0].flush({ near_earth_objects: {} });
+        reqs[1].flush('erro', { status: 500, statusText: 'Server Error' });
+        expect(erro).withContext('deve propagar o erro').not.toBeNull();
+        expect(out).withContext('não pode entregar dados parciais').toBeNull();
+      });
     });
   });
 

@@ -28,9 +28,11 @@
               {{ col.labelValue }}
             </text>
           }
-          <text class="tick" [attr.x]="col.centerX" [attr.y]="plotBottom + 20" text-anchor="middle">
-            {{ col.date | date: 'dd/MM' : 'UTC' : translate.lang() }}
-          </text>
+          @if (col.showTick) {
+            <text class="tick" [attr.x]="col.centerX" [attr.y]="plotBottom + 20" text-anchor="middle">
+              {{ col.date | date: 'dd/MM' : 'UTC' : translate.lang() }}
+            </text>
+          }
           <!-- Alvo de hover/foco: a faixa inteira, não só a coluna -->
           <rect
             class="hit"

@@ -16,8 +16,14 @@ import { TranslateService } from '../../core/i18n/translate.service';
 import { NeoBarsComponent } from './charts/neo-bars';
 import { NeoScatterComponent } from './charts/neo-scatter';
 
-/** Janela máxima aceita pelo feed do NeoWs. */
-const WINDOW_DAYS = 7;
+/** Quantos dias cada período cobre (o serviço fatia em janelas de 7). */
+const RANGE_DAYS: Record<NeoRange, number> = {
+  today: 1,
+  next7: 7,
+  last7: 7,
+  next30: 30,
+  last30: 30,
+};
 
 /**
  * Dashboard de asteroides próximos da Terra (NeoWs).
@@ -118,11 +124,11 @@ export class AsteroidsComponent implements OnInit {
   /** Todas as datas (YYYY-MM-DD) do período selecionado, em ordem. */
   private rangeDates(): string[] {
     const range = this.range();
-    const days = range === 'today' ? 1 : WINDOW_DAYS;
-    // 'last7' termina hoje; 'next7'/'today' começam hoje.
+    const days = RANGE_DAYS[range];
+    // Os períodos "últimos N" terminam hoje; os demais começam hoje.
     const start = new Date();
-    if (range === 'last7') {
-      start.setDate(start.getDate() - (WINDOW_DAYS - 1));
+    if (range === 'last7' || range === 'last30') {
+      start.setDate(start.getDate() - (days - 1));
     }
     return Array.from({ length: days }, (_, i) => {
       const d = new Date(start);
