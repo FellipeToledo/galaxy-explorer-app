@@ -218,10 +218,22 @@ src/app/
 - Verificação de layout com alturas uniformes: reservar linhas com
   `-webkit-line-clamp` + `min-height`.
 - **Asteroides (NeoWs)**: `GET {base}/neo/rest/v1/feed?start_date&end_date`
-  (chave NASA; **janela máx. 7 dias**). O feed agrupa por data e **repete todas
-  as aproximações de cada objeto** → o serviço casa a aproximação com o dia do
-  grupo e achata tudo em `Neo[]`. Datas montadas em fuso **local**
-  (`toISOString()` usaria UTC e pularia um dia).
+  (chave NASA; **janela máx. 7 dias** — 8 dias já dá `400 BAD_REQUEST`). O feed
+  agrupa por data e **repete todas as aproximações de cada objeto** → o serviço
+  casa a aproximação com o dia do grupo e achata tudo em `Neo[]`. Datas montadas
+  em fuso **local** (`toISOString()` usaria UTC e pularia um dia).
+  **Períodos de 30 dias** = `splitDateRange()` fatia em 5 janelas e `forkJoin`
+  busca em paralelo (medido: ~1,6 s, ~137 objetos — volume tranquilo). Uma
+  janela que falha **derruba o período**: melhor erro honesto que gráfico com
+  buraco silencioso. A ordenação por distância é feita sobre **todas** as
+  janelas juntas (ordenar cada uma daria lista serrilhada).
+- **`Neo.uid` (`id@data`) é a chave do `@for`, não o `id`**: o mesmo asteroide
+  pode ter duas aproximações no período e o `id` repetido dropa a linha sem
+  aviso. Vale para a tabela e para os pontos da dispersão.
+- **Rótulos do eixo X das barras**: com 30 dias a faixa cai a ~21px e "dd/MM"
+  ocupa ~34 → `tickStride` rala os rótulos. O **último dia sempre** tem rótulo
+  e os regulares somem perto dele — sem isso o penúltimo cola no último
+  (medido: −6px de sobreposição).
 - **Terra (EPIC)**: `/EPIC/api/natural[/date/YYYY-MM-DD]` + `/available` (datas).
   **As imagens do arquivo também exigem a chave** e a URL é derivada da data:
   `/EPIC/archive/natural/YYYY/MM/DD/{png|jpg}/<image>.{png|jpg}?api_key=…`.
@@ -260,9 +272,6 @@ src/app/
 ## Backlog / TODOs (levantados na conversa)
 
 Plano acordado (nesta ordem):
-- [ ] **Períodos além de 7 dias** nos Asteroides — encadear chamadas ao feed
-      (limite de 7 dias por request) ou usar `/neo/browse`; ~4 requests para um
-      mês. Hoje o seletor tem hoje / próximos 7 / últimos 7.
 - [ ] **Acessibilidade** — passada geral: teclado nos gráficos e no lightbox,
       foco visível, contraste do texto secundário, `prefers-reduced-motion` nos
       cards neon e no slider do EPIC. Nunca foi auditado ponta a ponta.
@@ -274,10 +283,6 @@ Melhorias no que já existe:
 - [ ] **Nomes de asteroide no `ct`?** — hoje `name` e datas do NeoWs não passam
       pela tradução de conteúdo (são designações, não prosa). Reavaliar só se
       aparecer texto livre na seção.
-- [ ] **Períodos além de 7 dias** nos Asteroides — exigiria encadear chamadas ao
-      feed (limite da API) ou usar `/neo/browse`; hoje o seletor tem
-      hoje / próximos 7 / últimos 7. (Pedido explícito do usuário para ficar no
-      backlog, não implementar agora.)
 
 Infra:
 - [ ] **Esperar o reset da quota do DeepL** (estourou; ver a data do ciclo no
@@ -297,9 +302,10 @@ fallback navegador/original), scroll infinito, filtros fiéis (ano+ordenação),
 glass-select, autocomplete, cards neon, deploy Vercel + serverless,
 **infra de produção**: `NASA_API_KEY` e `DEEPL_API_KEY` definidas na Vercel
 (Production + Preview) e **KV provisionado** (Upstash, `cache: memory+kv`),
-**☄️ Asteroides (NeoWs)**: rota `/asteroids`, seletor de período, stat tiles
-(total/perigosos/mais próximo/mais rápido), colunas empilhadas por dia,
-dispersão distância×tamanho e tabela — tudo i18n nos 2 idiomas.
+**☄️ Asteroides (NeoWs)**: rota `/asteroids`, seletor de período (hoje /
+próximos e últimos 7 / próximos e últimos **30**, estes fatiados em 5 chamadas),
+stat tiles (total/perigosos/mais próximo/mais rápido), colunas empilhadas por
+dia, dispersão distância×tamanho e tabela — tudo i18n nos 2 idiomas.
 **🌍 Terra (EPIC)**: rota `/earth`, disco em JPG com halo, slider temporal com
 play/pause/anterior/próximo e pré-carregamento dos quadros, campo de data com
 o arquivo inteiro (ajuste para a data válida mais próxima) e exportação da

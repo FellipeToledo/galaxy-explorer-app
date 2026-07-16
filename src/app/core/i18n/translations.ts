@@ -156,6 +156,8 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'neo.range.next7': 'Próximos 7 dias',
     'neo.range.today': 'Hoje',
     'neo.range.last7': 'Últimos 7 dias',
+    'neo.range.next30': 'Próximos 30 dias',
+    'neo.range.last30': 'Últimos 30 dias',
     'neo.loading': 'Rastreando o cinturão…',
     'neo.error':
       'Não foi possível carregar os asteroides. Verifique sua chave da API ou o limite de requisições.',
@@ -344,6 +346,8 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'neo.range.next7': 'Next 7 days',
     'neo.range.today': 'Today',
     'neo.range.last7': 'Last 7 days',
+    'neo.range.next30': 'Next 30 days',
+    'neo.range.last30': 'Last 30 days',
     'neo.loading': 'Tracking the belt…',
     'neo.error':
       'Could not load the asteroids. Check your API key or the request limit.',

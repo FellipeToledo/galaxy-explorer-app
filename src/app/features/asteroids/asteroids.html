@@ -90,7 +90,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (neo of neos(); track neo.id) {
+            @for (neo of neos(); track neo.uid) {
               <tr [class.is-hazard]="neo.hazardous">
                 <th scope="row">
                   @if (neo.jplUrl) {

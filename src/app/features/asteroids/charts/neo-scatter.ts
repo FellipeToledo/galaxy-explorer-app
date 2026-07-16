@@ -99,7 +99,9 @@ export class NeoScatterComponent {
       neo,
       cx: this.xOf(neo.missLunar),
       cy: this.yOfLog(Math.log10(Math.max(1, neo.diameterAvg))),
-      label: neo.id === closest.id ? neo.name : null,
+      // uid, não id: o mesmo asteroide pode ter duas aproximações no período
+      // e o rótulo cairia no ponto errado.
+      label: neo.uid === closest.uid ? neo.name : null,
     }));
   });
 

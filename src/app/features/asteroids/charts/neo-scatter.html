@@ -24,7 +24,7 @@
         {{ 'neo.chartScatter.xAxis' | t }}
       </text>
 
-      @for (dot of dots(); track dot.neo.id) {
+      @for (dot of dots(); track dot.neo.uid) {
         <g>
           <!-- Anel de 2px na cor da superfície: os pontos se sobrepõem muito -->
           <circle
@@ -33,7 +33,7 @@
             [attr.r]="dotR"
             [class.hazard]="dot.neo.hazardous"
             [class.safe]="!dot.neo.hazardous"
-            [class.dim]="hovered() && hovered()?.neo?.id !== dot.neo.id"
+            [class.dim]="hovered() && hovered()?.neo?.uid !== dot.neo.uid"
           />
           @if (dot.label) {
             <text class="dot-label" [attr.x]="dot.cx + 10" [attr.y]="dot.cy + 4">{{ dot.label }}</text>

@@ -10,6 +10,8 @@ const H = 260;
 const PAD = { top: 18, right: 14, bottom: 34, left: 44 };
 /** Espessura máxima da coluna — a sobra da faixa vira respiro. */
 const MAX_BAR = 24;
+/** Espaço mínimo por rótulo de data no eixo X ("dd/MM" ≈ 30px). */
+const TICK_MIN_PX = 34;
 /** Vão na cor da superfície entre os segmentos empilhados. */
 const GAP = 2;
 const RADIUS = 4;
@@ -28,6 +30,8 @@ interface Column {
   centerX: number;
   topY: number;
   labelValue: string | null;
+  /** Rótulo de data no eixo: com 30 dias, só alguns cabem sem colidir. */
+  showTick: boolean;
 }
 
 /**
@@ -80,6 +84,10 @@ export class NeoBarsComponent {
     const band = plotW / days.length;
     const barW = Math.min(MAX_BAR, band * 0.55);
     const peak = Math.max(...days.map((d) => d.total));
+    // "dd/MM" ocupa ~30px: com 30 dias a faixa cai para ~21px e os rótulos
+    // colidiriam. Mostra 1 a cada N.
+    const tickStride = Math.max(1, Math.ceil(TICK_MIN_PX / band));
+    const lastIdx = days.length - 1;
     // O rótulo direto marca o dia de pico — só vale se o pico for único;
     // num empate ele viraria "um número em cada coluna" (o eixo já basta).
     const peakIsUnique = days.filter((d) => d.total === peak).length === 1;
@@ -120,6 +128,11 @@ export class NeoBarsComponent {
         centerX,
         topY: totalTop,
         labelValue: peakIsUnique && d.total === peak && peak > 0 ? String(d.total) : null,
+        // O último dia sempre tem rótulo (fecha o eixo); os regulares só se
+        // ficarem longe dele — senão o penúltimo cola no último (medido: -6px).
+        showTick:
+          i === lastIdx ||
+          (i % tickStride === 0 && lastIdx - i >= tickStride),
       };
     });
   });

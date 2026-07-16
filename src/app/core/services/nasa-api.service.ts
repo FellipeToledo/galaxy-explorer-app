@@ -1,11 +1,11 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, forkJoin } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AppConfigService } from '../config/app-config.service';
 import { Apod } from '../models/apod.model';
 import { MediaAssets, MediaType, NasaMedia } from '../models/media.model';
-import { Neo } from '../models/neo.model';
+import { NEO_FEED_MAX_DAYS, Neo } from '../models/neo.model';
 import { EpicImage } from '../models/epic.model';
 
 /** Formato bruto da resposta da NASA Image and Video Library. */
@@ -53,6 +53,32 @@ interface EpicItem {
   image?: string;
   date?: string;
   centroid_coordinates?: { lat?: number; lon?: number };
+}
+
+/**
+ * Fatia [start, end] em janelas de no máximo `maxDays` dias (inclusive nas
+ * pontas). Exportada para ser testada sozinha: é aritmética de data, onde os
+ * erros de ±1 dia se escondem.
+ */
+export function splitDateRange(
+  start: string,
+  end: string,
+  maxDays: number,
+): [string, string][] {
+  const DIA = 86_400_000;
+  const ini = Date.parse(start + 'T00:00:00Z');
+  const fim = Date.parse(end + 'T00:00:00Z');
+  if (isNaN(ini) || isNaN(fim) || fim < ini) {
+    return [[start, end]];
+  }
+  const iso = (t: number) => new Date(t).toISOString().slice(0, 10);
+  const janelas: [string, string][] = [];
+  for (let t = ini; t <= fim; t += maxDays * DIA) {
+    // -1 dia: a janela é inclusiva nas duas pontas (7 dias = start+6).
+    const ate = Math.min(t + (maxDays - 1) * DIA, fim);
+    janelas.push([iso(t), iso(ate)]);
+  }
+  return janelas;
 }
 
 /**
@@ -270,14 +296,25 @@ export class NasaApiService {
   // ── NeoWs — Near Earth Object Web Service ───────────────────────────────
   /**
    * Asteroides com aproximação da Terra entre duas datas (YYYY-MM-DD).
-   * A janela aceita pelo feed é de no máximo 7 dias.
+   *
+   * O feed aceita no máximo 7 dias por request, então períodos maiores são
+   * **fatiados em janelas** e buscados em paralelo (medido: 30 dias = 5
+   * chamadas, ~1,6 s, ~137 objetos). Uma janela que falhe derruba o período
+   * inteiro — melhor um erro honesto que um gráfico com buracos silenciosos.
    */
   getNeoFeed(startDate: string, endDate: string): Observable<Neo[]> {
-    return this.http
-      .get<NeoFeedResponse>(`${this.base}/neo/rest/v1/feed`, {
-        params: this.withKey({ start_date: startDate, end_date: endDate }),
-      })
-      .pipe(map((res) => this.mapNeos(res)));
+    const janelas = splitDateRange(startDate, endDate, NEO_FEED_MAX_DAYS);
+    const requests = janelas.map(([start, end]) =>
+      this.http.get<NeoFeedResponse>(`${this.base}/neo/rest/v1/feed`, {
+        params: this.withKey({ start_date: start, end_date: end }),
+      }),
+    );
+    return forkJoin(requests).pipe(
+      map((respostas) => {
+        const todos = respostas.flatMap((res) => this.mapNeos(res));
+        return todos.sort((a, b) => a.missKm - b.missKm);
+      }),
+    );
   }
 
   private mapNeos(res: NeoFeedResponse): Neo[] {
@@ -299,6 +336,7 @@ export class NasaApiService {
         }
         list.push({
           id: obj.id,
+          uid: `${obj.id}@${date}`,
           // A API entrega o nome entre parênteses: "(2019 AB1)".
           name: (obj.name ?? obj.id).replace(/^\(|\)$/g, ''),
           diameterMin: min,
@@ -315,7 +353,9 @@ export class NasaApiService {
         });
       }
     }
-    return list.sort((a, b) => a.missKm - b.missKm);
+    // Sem ordenar aqui: quem ordena é o getNeoFeed, sobre todas as janelas
+    // juntas (ordenar cada uma daria uma lista "serrilhada" ao concatenar).
+    return list;
   }
 
   private mapImages(res: ImageLibraryResponse): NasaMedia[] {
