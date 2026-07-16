@@ -11,6 +11,7 @@ npm start        # só o front-end (http://localhost:4200)
 npm run dev      # front-end + proxy de tradução (recomendado)
 npm run server   # só o proxy de tradução (porta 3001)
 npm run build    # build de produção (dist/galaxy-explorer/browser)
+npm run test:all # testes do server (node --test) + do front (Karma headless)
 ```
 
 ## Fluxo de trabalho (IMPORTANTE)
@@ -44,6 +45,12 @@ npm run build    # build de produção (dist/galaxy-explorer/browser)
 - O usuário valida visualmente na máquina dele; screenshots dele orientam
   ajustes finos. Preferências: perguntar antes de mudanças de escopo, oferecer
   recomendação clara ("vai na sua recomendação" = prosseguir).
+- **Testes**: `npm run test:all` antes de entregar. O CI
+  (`.github/workflows/ci.yml`) roda testes + build em cada PR. Dois mundos:
+  `server/*.test.mjs` usa o **runner nativo do Node** (`node --test`) porque
+  `server/` é sem dependências; o front usa **Karma/Jasmine** (`*.spec.ts`), que
+  já vinha configurado. **Ao mexer numa regra "medida" (as do "não
+  re-litigar"), o teste dela deve falhar** — é para isso que ele existe.
 
 ## Arquitetura
 
@@ -252,6 +259,17 @@ src/app/
 
 ## Backlog / TODOs (levantados na conversa)
 
+Plano acordado (nesta ordem):
+- [ ] **Períodos além de 7 dias** nos Asteroides — encadear chamadas ao feed
+      (limite de 7 dias por request) ou usar `/neo/browse`; ~4 requests para um
+      mês. Hoje o seletor tem hoje / próximos 7 / últimos 7.
+- [ ] **Acessibilidade** — passada geral: teclado nos gráficos e no lightbox,
+      foco visível, contraste do texto secundário, `prefers-reduced-motion` nos
+      cards neon e no slider do EPIC. Nunca foi auditado ponta a ponta.
+- [ ] **Nova seção da NASA** — candidatas: Mars Weather (InSight), TechTransfer,
+      Exoplanetas, DONKI (clima espacial). **Investigar se estão vivas antes de
+      prometer** — a API de Marte já foi arquivada debaixo do projeto uma vez.
+
 Melhorias no que já existe:
 - [ ] **Nomes de asteroide no `ct`?** — hoje `name` e datas do NeoWs não passam
       pela tradução de conteúdo (são designações, não prosa). Reavaliar só se
@@ -272,7 +290,9 @@ Infra:
       `kv-cache.mjs` fala **REST/HTTP**. Sinal de acerto: aparecem
       `KV_REST_API_URL`/`KV_REST_API_TOKEN`. Env var nova **exige redeploy**.
 
-Concluídos (referência): i18n UI (pt-BR/en), tradução de conteúdo (DeepL +
+Concluídos (referência): **testes + CI** (62 testes: 20 no `server/` via
+`node --test`, 42 no front via Karma; GitHub Action com testes + build por PR),
+i18n UI (pt-BR/en), tradução de conteúdo (DeepL +
 fallback navegador/original), scroll infinito, filtros fiéis (ano+ordenação),
 glass-select, autocomplete, cards neon, deploy Vercel + serverless,
 **infra de produção**: `NASA_API_KEY` e `DEEPL_API_KEY` definidas na Vercel

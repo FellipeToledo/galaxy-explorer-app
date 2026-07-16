@@ -1,0 +1,34 @@
+name: CI
+
+# Roda no PR e na main. O deploy continua sendo da Vercel (git-connected);
+# aqui é só o portão de qualidade.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # server/ é Node puro, sem dependências → runner nativo do Node.
+      - name: Testes do backend de tradução
+        run: npm run test:server
+
+      # ChromeHeadless: o ubuntu-latest já traz o Chrome instalado.
+      - name: Testes do front-end
+        run: npm run test:ci
+
+      # Sem NASA_API_KEY o generate-config não gera nada e o app cairia no
+      # DEMO_KEY — o que é irrelevante aqui: o build só precisa compilar.
+      - name: Build de produção
+        run: npm run build
