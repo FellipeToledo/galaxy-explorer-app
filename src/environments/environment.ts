@@ -29,4 +29,6 @@ export const environment = {
    * o arquivo: ele não manda CORS (ver server/exoplanets-core.mjs).
    */
   exoplanetsApiUrl: '/api/exoplanets',
+  /** Proxy do TechTransfer (CORS liberado só para o site deles). */
+  techApiUrl: '/api/techtransfer',
 };

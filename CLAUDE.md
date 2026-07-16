@@ -59,8 +59,9 @@ scripts/generate-config.mjs # build: NASA_API_KEY (env) → public/config.json
 server/translate-core.mjs   # núcleo de tradução (DeepL + cache), compartilhado
 server/kv-cache.mjs         # cache durável opcional (KV via REST, sem deps)
 server/exoplanets-core.mjs  # proxy do Exoplanet Archive (TAP; ele não tem CORS)
+server/techtransfer-core.mjs # proxy do TechTransfer (CORS só p/ o site deles)
 server/index.mjs            # proxy local de dev (Node puro, sem deps)
-api/translate.mjs, health.mjs, exoplanets.mjs # funções serverless (usam os núcleos)
+api/translate.mjs, health.mjs, exoplanets.mjs, techtransfer.mjs # serverless
 vercel.json                 # build + outputDirectory + SPA rewrites (preserva /api)
 proxy.conf.json             # dev: /api → localhost:3001
 src/app/
@@ -78,8 +79,9 @@ src/app/
 │   ├── asteroids/          # dashboard NeoWs: stat tiles + 2 gráficos + tabela
 │   │   └── charts/         # neo-bars, neo-scatter (SVG próprio) + charts.scss
 │   ├── earth/              # EPIC: disco da Terra + slider temporal (play/pause)
-│   └── exoplanets/         # 🪐 Exoplanet Archive: tiles + 2 gráficos + tabela
-│       └── charts/         # exo-years, exo-mass-radius (SVG próprio)
+│   ├── exoplanets/         # 🪐 Exoplanet Archive: tiles + 2 gráficos + tabela
+│   │   └── charts/         # exo-years, exo-mass-radius (SVG próprio)
+│   └── tech/               # 🔬 TechTransfer: patentes (cards → site da NASA)
 ├── shared/
 │   ├── starfield/          # fundo de estrelas em <canvas> (fora da zona)
 │   ├── navbar/             # navegação + seletor de idioma
@@ -92,7 +94,7 @@ src/app/
 │   └── scroll-end/         # IntersectionObserver → output scrolled (infinite)
 └── app.routes.ts           # rotas lazy: '' = APOD, 'mars', 'asteroids',
                             # 'earth', 'media',
-                            # 'exoplanets' (title = CHAVE i18n)
+                            # 'exoplanets', 'tech' (title = CHAVE i18n)
 ```
 
 ## Decisões técnicas (não re-litigar)
@@ -295,6 +297,22 @@ src/app/
   linhas, uma por publicação, em vez de ~6,3 mil planetas); cache memória+KV
   com **TTL de 1 dia** (o TAP leva **~2,5 s** por consulta agregada — medido; do
   cache, 198 ms).
+- **TechTransfer (🔬 Tecnologia)**: a API **mudou de casa** —
+  `api.nasa.gov/techtransfer` devolve **302** para uma *página de documentação
+  HTML*; o endpoint vivo é `technology.nasa.gov/api/query/patent/<termo>`. Ela
+  libera CORS **só para o próprio site**
+  (`Access-Control-Allow-Origin: https://technology.nasa.gov`) → daí o
+  `/api/techtransfer`. Regras medidas, não re-litigar:
+  - **só patentes**: `software` (0/84) e `spinoff` (0/284) **não têm imagem
+    nenhuma**, contra **175/175** das patentes — seriam cards cegos;
+  - a API devolve **arrays de 13 posições**, não objetos: o mapa `F` no core é
+    a única fonte da verdade (se a NASA reordenar, o teste quebra antes da UI);
+  - ela **embute `<span class="highlight">`** no título/descrição — renderizar
+    como texto mostraria a tag, como HTML seria injeção → `stripHtml()`;
+  - **termo é obrigatório**: sem ele a API devolve **corpo vazio** (não `[]`),
+    por isso a seção abre com uma busca pronta;
+  - imagens com **espaço no nome** voltam 403 sem `encodeURI`; e há 403 isolado
+    de arquivo ausente → a imagem some (`.no-img`), sem ícone quebrado.
 - **Gráficos (skill `dataviz`)**: SVG próprio, sem lib. As cores das marcas
   (`charts.scss`: `--mark-safe #0891b2`, `--mark-hazard #d97706`) foram
   **validadas** por `scripts/validate_palette.js` do skill contra a superfície
@@ -309,12 +327,12 @@ src/app/
 
 ## Backlog / TODOs (levantados na conversa)
 
-Próximo (acordado):
-- [ ] **TechTransfer no endereço novo** — o `api.nasa.gov/techtransfer` devolve
-      302 para `technology.nasa.gov/api`. Investigar o que a API de lá oferece
-      hoje e se vale uma seção (patentes rendem texto e busca, pouco visual).
-
 Melhorias no que já existe:
+- [ ] **Software e spinoffs no TechTransfer** — existem na mesma API
+      (`/query/software/<termo>` e `/query/spinoff/<termo>`, medidos: 84 e 284
+      itens) mas **nenhum tem imagem**; o software traz link do GitHub (56/84).
+      Precisaria de um card sem imagem que não fique pobre — decidir o desenho
+      antes de implementar.
 - [ ] **Nomes de asteroide no `ct`?** — hoje `name` e datas do NeoWs não passam
       pela tradução de conteúdo (são designações, não prosa). Reavaliar só se
       aparecer texto livre na seção.
@@ -330,11 +348,12 @@ Infra:
       `kv-cache.mjs` fala **REST/HTTP**. Sinal de acerto: aparecem
       `KV_REST_API_URL`/`KV_REST_API_TOKEN`. Env var nova **exige redeploy**.
 
-Concluídos (referência): **🪐 Exoplanetas** (Exoplanet Archive via proxy;
+Concluídos (referência): **🔬 Tecnologia** (TechTransfer via proxy: patentes
+da NASA com busca e cards que levam ao site oficial), **🪐 Exoplanetas** (Exoplanet Archive via proxy;
 tiles, descobertas por ano, massa×raio com referências do Sistema Solar e
 tabela dos 200 mais próximos), **acessibilidade** (contraste AA medido, foco visível
 global, lightbox com dialog/Esc/focus-trap, gráficos que se anunciam),
-**testes + CI** (77 testes: 20 no `server/` via `node --test`, 57 no front via
+**testes + CI** (100 testes: 43 no `server/` via `node --test`, 57 no front via
 Karma; GitHub Action com testes + build por PR),
 i18n UI (pt-BR/en), tradução de conteúdo (DeepL +
 fallback navegador/original), scroll infinito, filtros fiéis (ano+ordenação),

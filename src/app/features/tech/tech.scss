@@ -1,0 +1,185 @@
+/* O card neon vem de shared/media-card/media-card.scss (importado abaixo):
+   duplicar as ~250 linhas da borda cônica divergiria no primeiro ajuste, e as
+   regras do CLAUDE.md (gira só com .in-view, nunca content-visibility) valem
+   igual aqui. */
+@use '../../shared/media-card/media-card.scss';
+
+.tech {
+  padding-block: 1rem 3rem;
+}
+
+.head {
+  margin-bottom: 1.5rem;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  margin: 0 0 0.4rem;
+}
+
+.title {
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  font-weight: 900;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  margin: 0.6rem 0 0;
+}
+
+/* A busca é a protagonista: a API exige termo (sem ele, corpo vazio) */
+.filters {
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  position: relative;
+  z-index: 30; /* autocomplete acima do grid */
+}
+
+.search-wrap {
+  position: relative;
+  max-width: 640px;
+  margin-inline: auto;
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.search input {
+  flex: 1 1 auto;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  padding: 0.7rem 1.1rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.search input:focus {
+  border-color: rgba(34, 211, 238, 0.6);
+}
+
+/* o outline: none acima venceria a regra global de foco */
+.search input:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+.search input::placeholder {
+  color: var(--text-dim);
+}
+
+.search-btn {
+  flex: none;
+  min-width: 96px;
+}
+
+/* ── Autocomplete ─────────────────────────────────────── */
+.suggestions {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  list-style: none;
+  margin: 0;
+  padding: 0.35rem;
+  border-radius: 14px;
+  background: rgba(13, 7, 38, 0.9);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 92, 246, 0.15);
+  animation: sugIn 0.16s ease;
+}
+
+@keyframes sugIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+.suggestion {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem 0.7rem;
+  border-radius: 9px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.suggestion.active {
+  color: var(--text);
+  background: linear-gradient(
+    120deg,
+    rgba(34, 211, 238, 0.18),
+    rgba(139, 92, 246, 0.22)
+  );
+}
+
+.sug-icon {
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.state.error {
+  color: #fca5a5;
+}
+
+.hint {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.count {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  margin: 0 0 1rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.75rem;
+}
+
+/* O card é um link: tira o sublinhado herdado do <a> */
+.card {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Imagem que deu 403: o gradiente do --img-bg fica no lugar, sem ícone quebrado */
+.card-img.no-img .card-photo {
+  display: none;
+}
+
+.end-note {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  letter-spacing: 2px;
+  padding: 2rem 0 1rem;
+}

@@ -5,4 +5,6 @@ export const environment = {
   translateApiUrl: '/api/translate',
   /** Proxy do Exoplanet Archive (ele não manda CORS). */
   exoplanetsApiUrl: '/api/exoplanets',
+  /** Proxy do TechTransfer (CORS liberado só para o site deles). */
+  techApiUrl: '/api/techtransfer',
 };

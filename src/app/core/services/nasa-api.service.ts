@@ -8,6 +8,7 @@ import { MediaAssets, MediaType, NasaMedia } from '../models/media.model';
 import { NEO_FEED_MAX_DAYS, Neo } from '../models/neo.model';
 import { EpicImage } from '../models/epic.model';
 import { ExoDataset, ExoResponse } from '../models/exoplanet.model';
+import { Patent, PatentResponse } from '../models/tech.model';
 
 /** Formato bruto da resposta da NASA Image and Video Library. */
 interface ImageLibraryItem {
@@ -127,6 +128,20 @@ export class NasaApiService {
     return this.http
       .get<ExoResponse<T>>(this.appConfig.exoplanetsApiUrl, {
         params: new HttpParams().set('dataset', dataset),
+      })
+      .pipe(map((res) => res?.rows ?? []));
+  }
+
+  // ── TechTransfer (patentes da NASA, via o nosso proxy) ──────────────────
+  /**
+   * Patentes por termo. Passa pelo **nosso** `/api/techtransfer`: a API da
+   * NASA só libera CORS para `technology.nasa.gov`, e devolve arrays de 13
+   * posições com HTML embutido — o proxy normaliza tudo.
+   */
+  searchPatents(term: string): Observable<Patent[]> {
+    return this.http
+      .get<PatentResponse>(this.appConfig.techApiUrl, {
+        params: new HttpParams().set('q', term.trim()),
       })
       .pipe(map((res) => res?.rows ?? []));
   }

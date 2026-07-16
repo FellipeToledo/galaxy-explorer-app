@@ -1,0 +1,122 @@
+<section class="tech container">
+  <div class="head">
+    <p class="eyebrow">{{ 'tech.eyebrow' | t }}</p>
+    <h1 class="title">
+      {{ 'tech.title1' | t }} <span class="gradient-text">{{ 'tech.title2' | t }}</span>
+    </h1>
+    <p class="subtitle">{{ 'tech.subtitle' | t }}</p>
+  </div>
+
+  <div class="filters glass">
+    <div class="search-wrap">
+      <form class="search" (submit)="$event.preventDefault(); submit()">
+        <input
+          type="search"
+          class="search-input"
+          role="combobox"
+          autocomplete="off"
+          [value]="searchQuery()"
+          [attr.aria-expanded]="showSuggestions() && filteredSuggestions().length > 0"
+          (input)="onInput($any($event.target).value)"
+          (focus)="showSuggestions.set(true)"
+          (keydown)="onKeydown($event)"
+          [placeholder]="'tech.searchPlaceholder' | t"
+          [attr.aria-label]="'tech.searchAria' | t"
+        />
+        <button type="submit" class="btn btn-primary search-btn" [attr.aria-label]="'tech.searchAria' | t">
+          {{ 'tech.searchBtn' | t }}
+        </button>
+      </form>
+
+      @if (showSuggestions() && filteredSuggestions().length > 0) {
+        <ul class="suggestions" role="listbox">
+          @for (s of filteredSuggestions(); track s; let i = $index) {
+            <li
+              class="suggestion"
+              role="option"
+              [class.active]="i === suggestionIndex()"
+              [attr.aria-selected]="i === suggestionIndex()"
+              (mousedown)="$event.preventDefault(); selectSuggestion(s)"
+              (mouseenter)="suggestionIndex.set(i)"
+            >
+              <span class="sug-icon" aria-hidden="true">🔬</span>
+              <span class="sug-text">{{ s }}</span>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="state glass">
+      <div class="spinner"></div>
+      <p>{{ 'tech.loading' | t }}</p>
+    </div>
+  } @else if (error(); as err) {
+    <div class="state glass error">
+      <p>⚠️ {{ err | t }}</p>
+      <button class="btn btn-primary" (click)="retry()">{{ 'common.retry' | t }}</button>
+    </div>
+  } @else if (patents().length === 0) {
+    <div class="state glass">
+      <p>🔬 {{ 'tech.empty' | t: { term: term() } }}</p>
+      <p class="hint">{{ 'tech.emptyHint' | t }}</p>
+    </div>
+  } @else {
+    <p class="count">
+      {{ 'tech.count' | t: { count: patents().length, centers: centers() } }}
+    </p>
+
+    <div class="grid">
+      @for (p of patents(); track p.id; let i = $index) {
+        <!-- <a>, não <button>: cada card leva à página da patente na NASA -->
+        <!-- aria-label explícito: sem ele o nome do link seria a colagem de
+             alt + centro + código + título + descrição + categoria -->
+        <a
+          class="card"
+          appInView
+          [attr.data-theme]="i % 4"
+          [href]="link(p.caseNumber)"
+          target="_blank"
+          rel="noopener"
+          [attr.aria-label]="'tech.cardAria' | t: { title: p.title, center: p.center }"
+        >
+          <span class="card-body">
+            <span class="card-inner">
+              <span class="card-img">
+                <span class="card-img-glow"></span>
+                @if (p.imageUrl) {
+                  <!-- alt="": decorativa. O título já está no card (e no
+                       aria-label do link); repeti-lo aqui só faria o leitor de
+                       tela dizer a mesma coisa duas vezes.
+                       Algumas imagens dão 403 isolado → some em vez de quebrar. -->
+                  <img
+                    class="card-photo"
+                    [src]="p.imageUrl"
+                    alt=""
+                    loading="lazy"
+                    (error)="onImageError($event)"
+                  />
+                }
+                <span class="card-badge">{{ p.center || 'NASA' }}</span>
+              </span>
+              <span class="card-info">
+                <span class="card-brand">{{ p.caseNumber }}</span>
+                <span class="card-name">{{ p.title | ct }}</span>
+                <!-- ct: 160 → o card corta em 2 linhas (regra da quota) -->
+                <span class="card-desc">{{ p.description | ct: 160 }}</span>
+                <span class="card-meta">
+                  <span class="card-date">{{ p.category | ct: 60 }}</span>
+                  <span class="card-cta">{{ 'tech.view' | t }}</span>
+                </span>
+              </span>
+            </span>
+          </span>
+        </a>
+      }
+    </div>
+
+    <p class="end-note">{{ 'tech.end' | t }}</p>
+  }
+</section>

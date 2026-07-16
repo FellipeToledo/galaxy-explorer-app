@@ -8,6 +8,8 @@ export interface AppConfig {
   translateApiUrl: string;
   /** Nosso proxy para o Exoplanet Archive (ele não manda CORS). */
   exoplanetsApiUrl: string;
+  /** Nosso proxy para o TechTransfer (CORS liberado só para o site deles). */
+  techApiUrl: string;
 }
 
 /**
@@ -26,6 +28,7 @@ export class AppConfigService {
     nasaApiBase: environment.nasaApiBase,
     translateApiUrl: environment.translateApiUrl,
     exoplanetsApiUrl: environment.exoplanetsApiUrl,
+    techApiUrl: environment.techApiUrl,
   };
 
   get nasaApiKey(): string {
@@ -39,6 +42,9 @@ export class AppConfigService {
   }
   get exoplanetsApiUrl(): string {
     return this.config.exoplanetsApiUrl;
+  }
+  get techApiUrl(): string {
+    return this.config.techApiUrl;
   }
 
   /** Busca `config.json` e mescla sobre os padrões. Nunca lança. */
