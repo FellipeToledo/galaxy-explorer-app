@@ -68,6 +68,44 @@
   box-shadow: 0 0 20px rgba(180, 83, 9, 0.5);
 }
 
+/* Linha própria (basis 100% força a quebra): os chips de rover e a busca
+   ficam na 1ª linha, as câmeras do rover selecionado na 2ª. */
+.cameras {
+  flex-basis: 100%;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--glass-border);
+}
+
+.cameras-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  margin-right: 0.15rem;
+}
+
+.chip-cam {
+  font-size: 0.78rem;
+  padding: 0.32rem 0.75rem;
+}
+
+/* Câmera é refino textual, não filtro fiel — a nota evita prometer exatidão. */
+.cameras-note {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  margin-left: auto;
+  opacity: 0.75;
+}
+
+.chip-cam.active {
+  background: linear-gradient(120deg, #0e7490, #164e63);
+  box-shadow: 0 0 16px rgba(14, 116, 144, 0.45);
+}
+
 .search-wrap {
   position: relative;
 }

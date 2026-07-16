@@ -89,6 +89,17 @@ src/app/
   a **NASA Image and Video Library** (`images-api.nasa.gov`, sem chave).
   Filtros fiéis: `year_start/year_end` (a API **não tem sort** → ordenação por
   data é client-side via computed `sortedImages`; página = 100 itens).
+- **Câmera no Marte = refino textual, NÃO filtro fiel** (a exceção à regra
+  acima, e ela é assumida na UI): a API antiga tinha `camera=MAST`, a Image
+  Library **não tem campo de câmera** — o chip só acrescenta o nome ao termo.
+  Funciona porque **a busca é AND** sobre título+descrição+keywords (medido:
+  `Perseverance rover Mars` = 1259 hits → `… Mastcam-Z` = 118; `… xyzzyx` = 0),
+  mas quem não cita a câmera em texto nenhum fica de fora — daí a nota na UI
+  (`mars.cameraNote`). **Não julgar a qualidade pelo título**: "Ingenuity at
+  Third Airfield" entra em Mastcam-Z porque a *descrição* diz que foi tirada
+  por ela. As câmeras de cada rover em `ROVERS` foram **medidas**; ficaram de
+  fora Navcam/Hazcam do Spirit (**0 itens**), Hazcam (fotos *do* equipamento),
+  MARDI (5) e WATSON (ruído: "WATSON's Field Test in Greenland").
 - **Chave NASA / config runtime**: lida via `AppConfigService` (carregado no
   boot por `APP_INITIALIZER`), com padrões do `environment` sobrescritos por
   `public/config.json` (**gitignored**; ex.: `public/config.example.json`).
@@ -227,8 +238,6 @@ src/app/
 ## Backlog / TODOs (levantados na conversa)
 
 Melhorias no que já existe:
-- [ ] **Filtro por câmera** no Marte (estava no plano inicial da API antiga;
-      reavaliar viabilidade com a Image Library).
 - [ ] **Nomes de asteroide no `ct`?** — hoje `name` e datas do NeoWs não passam
       pela tradução de conteúdo (são designações, não prosa). Reavaliar só se
       aparecer texto livre na seção.
@@ -270,6 +279,8 @@ cancelando o anterior; curadas como fallback).
 **🎨 Busca de mídia**: rota `/media`, busca livre no acervo com filtros de
 tipo (tudo/imagens/vídeos), ano e ordenação, player de vídeo com legendas;
 cards e lightbox extraídos para `shared/` e reusados pelo Marte.
+**Câmeras no Marte**: chips por rover (medidos no acervo) que refinam a busca
+— com a ressalva textual na própria UI.
 
 ## Histórico essencial (para contexto)
 

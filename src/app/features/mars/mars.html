@@ -21,6 +21,7 @@
         </button>
       }
     </div>
+
     <div class="search-wrap">
       <form class="search" (submit)="$event.preventDefault(); submitSearch()">
         <input
@@ -63,6 +64,30 @@
         </ul>
       }
     </div>
+
+    <!-- Câmeras do rover atual: somem na busca livre (cameras() = []) -->
+    @if (cameras().length) {
+      <div class="cameras">
+        <span class="cameras-label">{{ 'mars.camera' | t }}</span>
+        <button
+          class="chip chip-cam"
+          [class.active]="camera() === ''"
+          (click)="selectCamera('')"
+        >
+          {{ 'mars.allCameras' | t }}
+        </button>
+        @for (c of cameras(); track c.id) {
+          <button
+            class="chip chip-cam"
+            [class.active]="camera() === c.id"
+            (click)="selectCamera(c.id)"
+          >
+            {{ c.label }}
+          </button>
+        }
+        <span class="cameras-note">{{ 'mars.cameraNote' | t }}</span>
+      </div>
+    }
   </div>
 
   <!-- Filtro por ano (API) + ordenação (client-side) -->

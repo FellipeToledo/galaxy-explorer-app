@@ -18,7 +18,7 @@ import {
   tap,
 } from 'rxjs/operators';
 import { NasaApiService } from '../../core/services/nasa-api.service';
-import { ROVERS, RoverName } from '../../core/models/mars.model';
+import { ROVERS, RoverCamera, RoverName } from '../../core/models/mars.model';
 import {
   NasaMedia,
   SORT_OPTIONS,
@@ -126,7 +126,14 @@ export class MarsComponent implements OnInit {
   private page = 1;
 
   protected readonly rover = signal<RoverName | null>('perseverance');
+  /** Câmera do rover atual ('' = todas). Só vale com um rover selecionado. */
+  protected readonly camera = signal<string>('');
   protected readonly query = signal<string>('');
+
+  /** Câmeras do rover atual — vazio na busca livre, aí os chips somem. */
+  protected readonly cameras = computed<RoverCamera[]>(
+    () => this.rovers.find((r) => r.name === this.rover())?.cameras ?? [],
+  );
   /** Ano selecionado ('' = todos). */
   protected readonly year = signal<string>('');
   /** Ordenação client-side (a API só entrega por relevância). */
@@ -213,7 +220,16 @@ export class MarsComponent implements OnInit {
 
   protected selectRover(name: RoverName): void {
     this.rover.set(name);
+    // Cada rover tem suas câmeras: manter a anterior deixaria um chip ativo
+    // que não existe no rover novo.
+    this.camera.set('');
     this.query.set('');
+    this.runRoverSearch();
+  }
+
+  /** Chip de câmera: refina a busca do rover (clicar no ativo desmarca). */
+  protected selectCamera(id: string): void {
+    this.camera.set(this.camera() === id ? '' : id);
     this.runRoverSearch();
   }
 
@@ -243,6 +259,7 @@ export class MarsComponent implements OnInit {
     }
     this.showSuggestions.set(false);
     this.rover.set(null);
+    this.camera.set('');
     this.search(term);
   }
 
@@ -251,6 +268,7 @@ export class MarsComponent implements OnInit {
     this.showSuggestions.set(false);
     this.suggestionIndex.set(-1);
     this.rover.set(null);
+    this.camera.set('');
     this.search(term);
   }
 
@@ -304,10 +322,12 @@ export class MarsComponent implements OnInit {
     this.rover() ? this.runRoverSearch() : this.search(this.query() || 'Mars');
   }
 
-  /** Monta a busca a partir do rover atual e dispara. */
+  /** Monta a busca a partir do rover + câmera atuais e dispara. */
   private runRoverSearch(): void {
     const rover = this.rovers.find((r) => r.name === this.rover());
-    const term = rover?.query ?? 'Mars';
+    // A câmera entra como termo extra: a API não tem campo de câmera, então
+    // ela casa no texto (título/descrição) do item.
+    const term = [rover?.query ?? 'Mars', this.camera()].filter(Boolean).join(' ');
     this.query.set(term);
     this.search(term);
   }
