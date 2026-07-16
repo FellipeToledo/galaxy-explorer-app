@@ -223,6 +223,21 @@ src/app/
   **não é ISO válido** em todo navegador) → o serviço também entrega `dateIso`.
   Os quadros são pré-carregados antes do play (senão o 1º ciclo pisca), e a
   flutuação CSS **para durante o play** (dois movimentos somados enjoam).
+- **Datas do EPIC**: `/available` traz **3.566 datas** (2015-06-13 → hoje) e o
+  arquivo é **esburacado** (2019 tem só 172 dias; 2023, 361). Por isso um
+  `<input type="date">` (como o APOD) com `min`/`max` reais, e não dropdown —
+  o seletor antigo cortava em 60 e escondia **98%** do arquivo. Data sem imagem
+  **não dá tela vazia**: `nearestDate()` pula para a válida mais próxima e a UI
+  diz que ajustou (`earth.adjusted`) — silêncio aqui pareceria campo quebrado.
+- **Exportar a sequência (.webm)**: `MediaRecorder` + `canvas.captureStream(0)`
+  com `requestFrame()` manual — **sem lib** (gif.js traria ~30 KB + worker, e
+  GIF de 20 quadros 2048² sai enorme e com 256 cores). Detalhes que quebram se
+  mexerem: `crossOrigin='anonymous'` nas imagens (o arquivo do EPIC manda
+  `Access-Control-Allow-Origin: *`; sem isso o canvas fica *tainted* e a
+  gravação falha), `captureStream(0)` + `requestFrame` faz a duração não
+  depender da velocidade da máquina, `revokeObjectURL` (o blob tem dezenas de
+  MB) e o botão só aparece se `MediaRecorder.isTypeSupported` (Safari é
+  irregular). Verificado: 22 quadros → webm/vp9 1024², 8,2 s, 0,26 MB.
 - **Gráficos (skill `dataviz`)**: SVG próprio, sem lib. As cores das marcas
   (`charts.scss`: `--mark-safe #0891b2`, `--mark-hazard #d97706`) foram
   **validadas** por `scripts/validate_palette.js` do skill contra a superfície
@@ -245,10 +260,6 @@ Melhorias no que já existe:
       feed (limite da API) ou usar `/neo/browse`; hoje o seletor tem
       hoje / próximos 7 / últimos 7. (Pedido explícito do usuário para ficar no
       backlog, não implementar agora.)
-- [ ] **Datas do EPIC além das 60 mais recentes** — o `/available` traz milhares
-      de datas e o seletor corta em 60 (`MAX_DATES`). Avaliar um date picker
-      com as datas válidas em vez da lista.
-- [ ] **Vídeo/GIF do dia no EPIC** — exportar a sequência animada do dia.
 
 Infra:
 - [ ] **Esperar o reset da quota do DeepL** (estourou; ver a data do ciclo no
@@ -269,8 +280,10 @@ glass-select, autocomplete, cards neon, deploy Vercel + serverless,
 **☄️ Asteroides (NeoWs)**: rota `/asteroids`, seletor de período, stat tiles
 (total/perigosos/mais próximo/mais rápido), colunas empilhadas por dia,
 dispersão distância×tamanho e tabela — tudo i18n nos 2 idiomas.
-**🌍 Terra (EPIC)**: rota `/earth`, seletor de data, disco em JPG com halo,
-slider temporal com play/pause/anterior/próximo e pré-carregamento dos quadros.
+**🌍 Terra (EPIC)**: rota `/earth`, disco em JPG com halo, slider temporal com
+play/pause/anterior/próximo e pré-carregamento dos quadros, campo de data com
+o arquivo inteiro (ajuste para a data válida mais próxima) e exportação da
+sequência do dia em `.webm`.
 **Melhorias**: `AppTitleStrategy` (título da aba segue o idioma — as rotas
 guardam a **chave**, não o texto), indicador "traduzindo…"
 (`shared/translating/`), alta resolução no lightbox via `collection.json` e

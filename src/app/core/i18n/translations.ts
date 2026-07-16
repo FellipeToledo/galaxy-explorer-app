@@ -124,6 +124,12 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
       'O disco completo do planeta, fotografado a 1,5 milhão de km ao longo de um dia.',
     'earth.date': 'Data',
     'earth.dateAria': 'Escolher a data',
+    'earth.adjusted':
+      '📅 Não há imagens em {{date}} — mostrando a data mais próxima com registro.',
+    'earth.saveVideo': '🎬 Baixar a sequência (.webm)',
+    'earth.saveVideoTitle': 'Gera um vídeo com os quadros do dia',
+    'earth.saveVideoWait': 'Aguarde o carregamento dos quadros',
+    'earth.saving': 'Gravando… {{pct}}%',
     'earth.loading': 'Buscando o planeta…',
     'earth.error':
       'Não foi possível carregar as imagens da Terra. Verifique sua chave da API ou o limite de requisições.',
@@ -306,6 +312,12 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
       'The full disc of the planet, photographed from 1.5 million km over a single day.',
     'earth.date': 'Date',
     'earth.dateAria': 'Choose the date',
+    'earth.adjusted':
+      '📅 No images on {{date}} — showing the closest date on record.',
+    'earth.saveVideo': '🎬 Download the sequence (.webm)',
+    'earth.saveVideoTitle': "Generates a video from the day's frames",
+    'earth.saveVideoWait': 'Wait for the frames to load',
+    'earth.saving': 'Recording… {{pct}}%',
     'earth.loading': 'Finding the planet…',
     'earth.error':
       'Could not load the Earth images. Check your API key or the request limit.',
