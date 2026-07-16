@@ -10,6 +10,10 @@
   </ul>
 
   <div class="plot">
+    <!-- Aqui role="img" + resumo é o certo, e os pontos NÃO são focáveis: são
+         até 147 num período de 30 dias, e tabular por todos seria hostil. A
+         tabela da página traz os mesmos dados (nome, distância, tamanho),
+         ordenada por distância — que é a leitura deste gráfico. -->
     <svg [attr.viewBox]="'0 0 ' + viewW + ' ' + viewH" role="img" [attr.aria-label]="'neo.chartScatter.aria' | t">
       @for (tick of yTicks(); track tick.label) {
         <line class="grid" [attr.x1]="plotLeft" [attr.y1]="tick.y" [attr.x2]="plotRight" [attr.y2]="tick.y" />
@@ -38,16 +42,6 @@
           @if (dot.label) {
             <text class="dot-label" [attr.x]="dot.cx + 10" [attr.y]="dot.cy + 4">{{ dot.label }}</text>
           }
-          <!-- Alvo de teclado (o ponteiro é tratado pela camada abaixo) -->
-          <circle
-            class="hit key-hit"
-            tabindex="0"
-            [attr.cx]="dot.cx"
-            [attr.cy]="dot.cy"
-            [attr.r]="hitR"
-            (focus)="hover(dot)"
-            (blur)="hover(null)"
-          />
         </g>
       }
 

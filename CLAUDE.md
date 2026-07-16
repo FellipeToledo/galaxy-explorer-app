@@ -257,6 +257,26 @@ src/app/
   depender da velocidade da máquina, `revokeObjectURL` (o blob tem dezenas de
   MB) e o botão só aparece se `MediaRecorder.isTypeSupported` (Safari é
   irregular). Verificado: 22 quadros → webm/vp9 1024², 8,2 s, 0,26 MB.
+- **Acessibilidade — o que foi medido (não re-litigar)**:
+  - **Contraste**: `--text-dim` era `#6b6a8f` = **3.80:1** e reprovava AA (mín.
+    4.5 para texto normal) — justo no texto miúdo (datas, ticks, hints). Hoje é
+    `#8382a8` = **5.32:1** no pior fundo (`--space-2`). Mexeu na cor? **Meça.**
+  - **Foco visível**: regra global `:focus-visible` (ciano, 10.8:1). Quem usa
+    `outline: none` **precisa** devolver um `:focus-visible` próprio — o
+    seletor de elemento vence a regra global (foi o caso dos campos de busca do
+    Marte e da Mídia, e do player).
+  - **`role="img"` num `<svg>` faz o leitor IGNORAR o conteúdo interno.** Por
+    isso as barras usam `role="group"` + `role="img"`/`aria-label` em cada
+    coluna (elas se anunciam), e a dispersão fica `role="img"` com resumo e
+    **pontos não-focáveis**: seriam até 147 paradas mudas no Tab. Nos dois
+    casos a **tabela** é a leitura completa — é o que autoriza essa escolha.
+  - **Lightbox**: `role=dialog` + `aria-modal`, foco entra ao abrir, **Esc**
+    fecha, Tab é preso dentro (focus trap) e o foco **volta para o card** ao
+    fechar. Tem teste: isso regride em silêncio.
+  - `prefers-reduced-motion`: regra global mata as animações CSS; o starfield e
+    o `in-view` (borda dos cards) já checam por conta. O play do EPIC é
+    `setInterval` disparado **pelo usuário** (tem play/pause) — não é
+    movimento automático, então fica.
 - **Gráficos (skill `dataviz`)**: SVG próprio, sem lib. As cores das marcas
   (`charts.scss`: `--mark-safe #0891b2`, `--mark-hazard #d97706`) foram
   **validadas** por `scripts/validate_palette.js` do skill contra a superfície
@@ -272,9 +292,6 @@ src/app/
 ## Backlog / TODOs (levantados na conversa)
 
 Plano acordado (nesta ordem):
-- [ ] **Acessibilidade** — passada geral: teclado nos gráficos e no lightbox,
-      foco visível, contraste do texto secundário, `prefers-reduced-motion` nos
-      cards neon e no slider do EPIC. Nunca foi auditado ponta a ponta.
 - [ ] **Nova seção da NASA** — candidatas: Mars Weather (InSight), TechTransfer,
       Exoplanetas, DONKI (clima espacial). **Investigar se estão vivas antes de
       prometer** — a API de Marte já foi arquivada debaixo do projeto uma vez.
@@ -295,8 +312,10 @@ Infra:
       `kv-cache.mjs` fala **REST/HTTP**. Sinal de acerto: aparecem
       `KV_REST_API_URL`/`KV_REST_API_TOKEN`. Env var nova **exige redeploy**.
 
-Concluídos (referência): **testes + CI** (62 testes: 20 no `server/` via
-`node --test`, 42 no front via Karma; GitHub Action com testes + build por PR),
+Concluídos (referência): **acessibilidade** (contraste AA medido, foco visível
+global, lightbox com dialog/Esc/focus-trap, gráficos que se anunciam),
+**testes + CI** (77 testes: 20 no `server/` via `node --test`, 57 no front via
+Karma; GitHub Action com testes + build por PR),
 i18n UI (pt-BR/en), tradução de conteúdo (DeepL +
 fallback navegador/original), scroll infinito, filtros fiéis (ano+ordenação),
 glass-select, autocomplete, cards neon, deploy Vercel + serverless,

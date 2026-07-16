@@ -10,7 +10,15 @@
   </ul>
 
   <div class="plot">
-    <svg [attr.viewBox]="'0 0 ' + viewW + ' ' + viewH" role="img" [attr.aria-label]="'neo.chartBars.aria' | t">
+    <!-- role=group (não img): com role="img" o leitor de tela IGNORA o conteúdo
+         interno, e os alvos focáveis abaixo viram paradas mudas no Tab. Cada
+         coluna se anuncia sozinha; a tabela da página segue como leitura
+         completa. -->
+    <svg
+      [attr.viewBox]="'0 0 ' + viewW + ' ' + viewH"
+      role="group"
+      [attr.aria-label]="'neo.chartBars.aria' | t"
+    >
       <!-- Grade e eixo: hairlines sólidas, um passo acima da superfície -->
       @for (tick of yTicks(); track tick.value) {
         <line class="grid" x1="44" [attr.y1]="tick.y" [attr.x2]="viewW - 14" [attr.y2]="tick.y" />
@@ -33,10 +41,22 @@
               {{ col.date | date: 'dd/MM' : 'UTC' : translate.lang() }}
             </text>
           }
-          <!-- Alvo de hover/foco: a faixa inteira, não só a coluna -->
+          <!-- Alvo de hover/foco: a faixa inteira, não só a coluna.
+               O aria-label diz o mesmo que o tooltip: quem usa teclado ou
+               leitor não depende do hover para ler o valor. -->
           <rect
             class="hit"
             tabindex="0"
+            role="img"
+            [attr.aria-label]="
+              'neo.chartBars.dayAria'
+                | t
+                  : {
+                      date: (col.date | date: 'longDate' : 'UTC' : translate.lang()) ?? col.date,
+                      total: col.data.total,
+                      hazard: col.data.hazardous
+                    }
+            "
             [attr.x]="col.hitX"
             y="18"
             [attr.width]="col.hitW"

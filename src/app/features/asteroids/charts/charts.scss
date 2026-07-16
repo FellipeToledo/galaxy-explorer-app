@@ -147,15 +147,6 @@ circle.dim {
   stroke-width: 2;
 }
 
-/* Alvo só de teclado: não intercepta o ponteiro, que é da camada .nearest */
-.key-hit {
-  pointer-events: none;
-}
-
-.key-hit:focus-visible {
-  pointer-events: auto;
-}
-
 .nearest {
   cursor: crosshair;
 }

@@ -9,8 +9,6 @@ const H = 300;
 const PAD = { top: 18, right: 18, bottom: 40, left: 52 };
 /** Raio do ponto (≥ 8px de marca) e do alvo de hover (bem maior que a marca). */
 const DOT_R = 4.5;
-/** Alvo de foco por teclado (o ponteiro usa a camada de ponto-mais-próximo). */
-const HIT_R = 12;
 
 interface Dot {
   neo: Neo;
@@ -43,7 +41,6 @@ export class NeoScatterComponent {
   protected readonly plotLeft = PAD.left;
   protected readonly plotRight = W - PAD.right;
   protected readonly dotR = DOT_R;
-  protected readonly hitR = HIT_R;
 
   protected readonly hovered = signal<Dot | null>(null);
 
