@@ -18,6 +18,7 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'nav.earth': 'Terra',
     'nav.exoplanets': 'Exoplanetas',
     'nav.media': 'Mídia',
+    'nav.tech': 'Tecnologia',
     'nav.brandAria': 'Galaxy Explorer — início',
     'nav.language': 'Idioma',
 
@@ -38,6 +39,26 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'title.earth': 'Terra',
     'title.exoplanets': 'Exoplanetas',
     'title.media': 'Busca de Mídia',
+    'title.tech': 'Tecnologia',
+
+    // Tecnologia (NASA TechTransfer)
+    'tech.eyebrow': 'NASA · TechTransfer — patentes para licenciamento',
+    'tech.title1': 'Tecnologia',
+    'tech.title2': 'que Desce',
+    'tech.subtitle':
+      'O que a NASA inventou para o espaço e licencia para uso aqui embaixo.',
+    'tech.searchPlaceholder': 'Buscar tecnologia (ex.: robot, sensor…)',
+    'tech.searchAria': 'Buscar patentes da NASA',
+    'tech.searchBtn': '🔬 Buscar',
+    'tech.loading': 'Abrindo o arquivo de patentes…',
+    'tech.error':
+      'Não foi possível buscar as patentes. Verifique sua conexão e tente novamente.',
+    'tech.empty': '🔬 Nada encontrado para "{{term}}".',
+    'tech.emptyHint': 'A busca é em inglês — tente robot, sensor ou battery.',
+    'tech.count': '{{count}} patente(s) · {{centers}} centro(s) da NASA',
+    'tech.view': 'Ver patente ↗',
+    'tech.cardAria': '{{title}} — patente do centro {{center}} da NASA',
+    'tech.end': '✦ Fim dos resultados ✦',
 
     // Exoplanetas (NASA Exoplanet Archive)
     'exo.eyebrow': 'NASA · Exoplanet Archive (Caltech/IPAC)',
@@ -256,6 +277,7 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'nav.earth': 'Earth',
     'nav.exoplanets': 'Exoplanets',
     'nav.media': 'Media',
+    'nav.tech': 'Technology',
     'nav.brandAria': 'Galaxy Explorer — home',
     'nav.language': 'Language',
 
@@ -276,6 +298,26 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'title.earth': 'Earth',
     'title.exoplanets': 'Exoplanets',
     'title.media': 'Media Search',
+    'title.tech': 'Technology',
+
+    // Technology (NASA TechTransfer)
+    'tech.eyebrow': 'NASA · TechTransfer — patents available for licensing',
+    'tech.title1': 'Tech',
+    'tech.title2': 'Coming Down',
+    'tech.subtitle':
+      'What NASA invented for space and licenses for use down here.',
+    'tech.searchPlaceholder': 'Search technology (e.g., robot, sensor…)',
+    'tech.searchAria': 'Search NASA patents',
+    'tech.searchBtn': '🔬 Search',
+    'tech.loading': 'Opening the patent archive…',
+    'tech.error':
+      'Could not search the patents. Check your connection and try again.',
+    'tech.empty': '🔬 Nothing found for "{{term}}".',
+    'tech.emptyHint': 'Try robot, sensor or battery.',
+    'tech.count': '{{count}} patent(s) · {{centers}} NASA center(s)',
+    'tech.view': 'View patent ↗',
+    'tech.cardAria': '{{title}} — patent from NASA {{center}}',
+    'tech.end': '✦ End of results ✦',
 
     // Exoplanets (NASA Exoplanet Archive)
     'exo.eyebrow': 'NASA · Exoplanet Archive (Caltech/IPAC)',

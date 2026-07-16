@@ -41,5 +41,10 @@ export const routes: Routes = [
       import('./features/exoplanets/exoplanets').then((m) => m.ExoplanetsComponent),
     title: 'title.exoplanets',
   },
+  {
+    path: 'tech',
+    loadComponent: () => import('./features/tech/tech').then((m) => m.TechComponent),
+    title: 'title.tech',
+  },
   { path: '**', redirectTo: '' },
 ];
