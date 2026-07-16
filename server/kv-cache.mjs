@@ -89,14 +89,18 @@ export async function kvGetMany(keys) {
   return Array.isArray(values) ? values : keys.map(() => null);
 }
 
-/** Grava várias entradas com TTL. Erros são engolidos (cache é acessório). */
-export async function kvSetMany(entries) {
+/**
+ * Grava várias entradas com TTL. Erros são engolidos (cache é acessório).
+ * @param ttlSeconds sobrescreve o padrão de 30 dias (tradução não "estraga";
+ *   outros dados, como os do Exoplanet Archive, pedem janela mais curta).
+ */
+export async function kvSetMany(entries, ttlSeconds = TTL_SECONDS) {
   const commands = entries.map(({ key, value }) => [
     'SET',
     key,
     value,
     'EX',
-    String(TTL_SECONDS),
+    String(ttlSeconds),
   ]);
   await pipeline(commands);
 }

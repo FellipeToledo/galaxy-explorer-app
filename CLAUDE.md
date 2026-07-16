@@ -58,8 +58,9 @@ npm run test:all # testes do server (node --test) + do front (Karma headless)
 scripts/generate-config.mjs # build: NASA_API_KEY (env) → public/config.json
 server/translate-core.mjs   # núcleo de tradução (DeepL + cache), compartilhado
 server/kv-cache.mjs         # cache durável opcional (KV via REST, sem deps)
+server/exoplanets-core.mjs  # proxy do Exoplanet Archive (TAP; ele não tem CORS)
 server/index.mjs            # proxy local de dev (Node puro, sem deps)
-api/translate.mjs, health.mjs # funções serverless Vercel (usam o núcleo)
+api/translate.mjs, health.mjs, exoplanets.mjs # funções serverless (usam os núcleos)
 vercel.json                 # build + outputDirectory + SPA rewrites (preserva /api)
 proxy.conf.json             # dev: /api → localhost:3001
 src/app/
@@ -76,18 +77,22 @@ src/app/
 │   ├── media/              # 🎨 busca livre no acervo (imagens + vídeos)
 │   ├── asteroids/          # dashboard NeoWs: stat tiles + 2 gráficos + tabela
 │   │   └── charts/         # neo-bars, neo-scatter (SVG próprio) + charts.scss
-│   └── earth/              # EPIC: disco da Terra + slider temporal (play/pause)
+│   ├── earth/              # EPIC: disco da Terra + slider temporal (play/pause)
+│   └── exoplanets/         # 🪐 Exoplanet Archive: tiles + 2 gráficos + tabela
+│       └── charts/         # exo-years, exo-mass-radius (SVG próprio)
 ├── shared/
 │   ├── starfield/          # fundo de estrelas em <canvas> (fora da zona)
 │   ├── navbar/             # navegação + seletor de idioma
 │   ├── translating/        # chip "traduzindo…" (global, lê o ContentTranslate)
 │   ├── media-card/         # card neon (Marte + Mídia) — CSS mora aqui
 │   ├── media-lightbox/     # lightbox de imagem/vídeo + assets sob demanda
+│   ├── charts/             # charts.scss — CSS dos gráficos (Asteroides+Exo)
 │   ├── glass-select/       # dropdown glass reutilizável (teclado, aria)
 │   ├── in-view/            # IntersectionObserver → classe .in-view
 │   └── scroll-end/         # IntersectionObserver → output scrolled (infinite)
 └── app.routes.ts           # rotas lazy: '' = APOD, 'mars', 'asteroids',
-                            # 'earth', 'media' (title = CHAVE i18n)
+                            # 'earth', 'media',
+                            # 'exoplanets' (title = CHAVE i18n)
 ```
 
 ## Decisões técnicas (não re-litigar)
@@ -277,6 +282,19 @@ src/app/
     o `in-view` (borda dos cards) já checam por conta. O play do EPIC é
     `setInterval` disparado **pelo usuário** (tem play/pause) — não é
     movimento automático, então fica.
+- **Exoplanetas — as outras APIs da NASA estão mortas (medido em jul/2026)**:
+  `insight_weather` responde 200 mas com dados de **out/2020** (missão
+  encerrada); **DONKI** tinha 4 dos 6 endpoints em **503** (CME, GST, SEP, IPS);
+  **TechTransfer** virou 302 → `technology.nasa.gov/api`; `api.nasa.gov/exoplanet`
+  dá **404**. A fonte viva é o **NASA Exoplanet Archive** (TAP, Caltech/IPAC):
+  ~6,3 mil planetas. **Não prometer seção nova sem medir antes.**
+- **`/api/exoplanets` é proxy porque o Archive NÃO manda CORS** (verificado no
+  navegador: "Failed to fetch"; preflight 502). Regras: o cliente escolhe um
+  **`dataset` de lista fechada** — nunca manda SQL, senão o app vira túnel para
+  o TAP; `default_flag=1` em toda query (sem isso a `ps` devolve **40 mil**
+  linhas, uma por publicação, em vez de ~6,3 mil planetas); cache memória+KV
+  com **TTL de 1 dia** (o TAP leva **~2,5 s** por consulta agregada — medido; do
+  cache, 198 ms).
 - **Gráficos (skill `dataviz`)**: SVG próprio, sem lib. As cores das marcas
   (`charts.scss`: `--mark-safe #0891b2`, `--mark-hazard #d97706`) foram
   **validadas** por `scripts/validate_palette.js` do skill contra a superfície
@@ -291,10 +309,10 @@ src/app/
 
 ## Backlog / TODOs (levantados na conversa)
 
-Plano acordado (nesta ordem):
-- [ ] **Nova seção da NASA** — candidatas: Mars Weather (InSight), TechTransfer,
-      Exoplanetas, DONKI (clima espacial). **Investigar se estão vivas antes de
-      prometer** — a API de Marte já foi arquivada debaixo do projeto uma vez.
+Próximo (acordado):
+- [ ] **TechTransfer no endereço novo** — o `api.nasa.gov/techtransfer` devolve
+      302 para `technology.nasa.gov/api`. Investigar o que a API de lá oferece
+      hoje e se vale uma seção (patentes rendem texto e busca, pouco visual).
 
 Melhorias no que já existe:
 - [ ] **Nomes de asteroide no `ct`?** — hoje `name` e datas do NeoWs não passam
@@ -312,7 +330,9 @@ Infra:
       `kv-cache.mjs` fala **REST/HTTP**. Sinal de acerto: aparecem
       `KV_REST_API_URL`/`KV_REST_API_TOKEN`. Env var nova **exige redeploy**.
 
-Concluídos (referência): **acessibilidade** (contraste AA medido, foco visível
+Concluídos (referência): **🪐 Exoplanetas** (Exoplanet Archive via proxy;
+tiles, descobertas por ano, massa×raio com referências do Sistema Solar e
+tabela dos 200 mais próximos), **acessibilidade** (contraste AA medido, foco visível
 global, lightbox com dialog/Esc/focus-trap, gráficos que se anunciam),
 **testes + CI** (77 testes: 20 no `server/` via `node --test`, 57 no front via
 Karma; GitHub Action com testes + build por PR),

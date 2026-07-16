@@ -35,5 +35,11 @@ export const routes: Routes = [
       import('./features/media/media').then((m) => m.MediaComponent),
     title: 'title.media',
   },
+  {
+    path: 'exoplanets',
+    loadComponent: () =>
+      import('./features/exoplanets/exoplanets').then((m) => m.ExoplanetsComponent),
+    title: 'title.exoplanets',
+  },
   { path: '**', redirectTo: '' },
 ];

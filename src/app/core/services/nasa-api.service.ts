@@ -7,6 +7,7 @@ import { Apod } from '../models/apod.model';
 import { MediaAssets, MediaType, NasaMedia } from '../models/media.model';
 import { NEO_FEED_MAX_DAYS, Neo } from '../models/neo.model';
 import { EpicImage } from '../models/epic.model';
+import { ExoDataset, ExoResponse } from '../models/exoplanet.model';
 
 /** Formato bruto da resposta da NASA Image and Video Library. */
 interface ImageLibraryItem {
@@ -111,6 +112,23 @@ export class NasaApiService {
     return this.http.get<Apod>(`${this.base}/planetary/apod`, {
       params: this.withKey(params),
     });
+  }
+
+  // ── Exoplanetas (NASA Exoplanet Archive, via o nosso proxy) ─────────────
+  /**
+   * Um dataset de exoplanetas.
+   *
+   * Passa pelo **nosso** `/api/exoplanets` de propósito: o arquivo do Caltech
+   * não manda `Access-Control-Allow-Origin` e o navegador recusa a chamada
+   * direta (verificado). O proxy também cacheia — o TAP leva ~2,5 s por
+   * consulta agregada.
+   */
+  getExoplanets<T>(dataset: ExoDataset): Observable<T[]> {
+    return this.http
+      .get<ExoResponse<T>>(this.appConfig.exoplanetsApiUrl, {
+        params: new HttpParams().set('dataset', dataset),
+      })
+      .pipe(map((res) => res?.rows ?? []));
   }
 
   // ── EPIC — Earth Polychromatic Imaging Camera ───────────────────────────

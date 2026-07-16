@@ -1,0 +1,70 @@
+<figure class="chart">
+  <figcaption>
+    <span class="chart-title">{{ 'exo.chartMass.title' | t }}</span>
+    <span class="chart-sub">{{ 'exo.chartMass.sub' | t }}</span>
+  </figcaption>
+
+  <!-- 2 séries → legenda sempre presente (identidade nunca só pela cor: as
+       referências também têm rótulo direto no gráfico) -->
+  <ul class="legend">
+    <li><span class="swatch safe" aria-hidden="true"></span>{{ 'exo.legend.planets' | t }}</li>
+    <li><span class="swatch hazard" aria-hidden="true"></span>{{ 'exo.legend.solar' | t }}</li>
+  </ul>
+
+  <div class="plot">
+    <!-- role=img + resumo: são ~900 pontos, tabular por todos seria hostil;
+         a tabela da página é a leitura acessível. -->
+    <svg [attr.viewBox]="'0 0 ' + viewW + ' ' + viewH" role="img" [attr.aria-label]="'exo.chartMass.aria' | t">
+      @for (tick of yTicks(); track tick.label) {
+        <line class="grid" [attr.x1]="plotLeft" [attr.y1]="tick.y" [attr.x2]="plotRight" [attr.y2]="tick.y" />
+        <text class="tick" [attr.x]="plotLeft - 8" [attr.y]="tick.y + 4" text-anchor="end">{{ tick.label }}</text>
+      }
+      <line class="axis" [attr.x1]="plotLeft" [attr.y1]="plotBottom" [attr.x2]="plotRight" [attr.y2]="plotBottom" />
+
+      @for (tick of xTicks(); track tick.label) {
+        <text class="tick" [attr.x]="tick.x" [attr.y]="plotBottom + 20" text-anchor="middle">{{ tick.label }}</text>
+      }
+      <text class="axis-title" [attr.x]="(plotLeft + plotRight) / 2" [attr.y]="viewH - 6" text-anchor="middle">
+        {{ 'exo.chartMass.xAxis' | t }}
+      </text>
+
+      @for (dot of dots(); track dot.planet.pl_name) {
+        <circle
+          class="safe"
+          [attr.cx]="dot.cx"
+          [attr.cy]="dot.cy"
+          [attr.r]="dotR"
+          [class.dim]="hovered() && hovered()?.planet?.pl_name !== dot.planet.pl_name"
+        />
+      }
+
+      <!-- Referências por cima: são o ponto de comparação, não podem sumir -->
+      @for (ref of refs(); track ref.name) {
+        <g>
+          <circle class="hazard ref-dot" [attr.cx]="ref.cx" [attr.cy]="ref.cy" [attr.r]="refR" />
+          <text class="dot-label ref-label" [attr.x]="ref.cx + 10" [attr.y]="ref.cy + 4">{{ ref.name }}</text>
+        </g>
+      }
+
+      <!-- Camada de ponto-mais-próximo (o plot inteiro é o alvo) -->
+      <rect
+        class="hit nearest"
+        [attr.x]="plotLeft"
+        y="18"
+        [attr.width]="plotRight - plotLeft"
+        [attr.height]="plotBottom - 18"
+        (mousemove)="onPointerMove($event)"
+        (mouseleave)="hover(null)"
+      />
+    </svg>
+
+    @if (hovered(); as dot) {
+      <div class="tooltip" [style.left.%]="tipLeft()" [style.top.%]="tipTop()" role="status">
+        <strong>{{ dot.planet.pl_name }}</strong>
+        <span>{{ 'exo.tooltip.radius' | t: { value: (dot.planet.pl_rade | number: '1.1-2') ?? '' } }}</span>
+        <span>{{ 'exo.tooltip.mass' | t: { value: (dot.planet.pl_bmasse | number: '1.1-2') ?? '' } }}</span>
+        <span>{{ dot.planet.discoverymethod }} · {{ dot.planet.disc_year }}</span>
+      </div>
+    }
+  </div>
+</figure>

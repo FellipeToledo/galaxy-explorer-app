@@ -17,6 +17,7 @@ import {
   selfTest,
   kvSelfTest,
 } from './translate-core.mjs';
+import { datasetNames, getDataset, isDataset } from './exoplanets-core.mjs';
 
 const PORT = Number(process.env.PORT) || 3001;
 
@@ -62,6 +63,28 @@ const server = createServer((req, res) => {
       return;
     }
     sendJson(res, 200, body);
+    return;
+  }
+
+  // Mesmo contrato da função serverless (api/exoplanets.mjs).
+  if (req.method === 'GET' && url.pathname === '/api/exoplanets') {
+    const dataset = url.searchParams.get('dataset') ?? '';
+    if (!isDataset(dataset)) {
+      sendJson(res, 400, { error: 'dataset_invalido', allowed: datasetNames() });
+      return;
+    }
+    getDataset(dataset)
+      .then(({ rows, cache }) =>
+        sendJson(res, 200, { dataset, count: rows.length, cache, rows }),
+      )
+      .catch((err) => {
+        console.error('exoplanets error:', err.message);
+        sendJson(res, err.status ?? 502, {
+          error: 'exoplanets_failed',
+          upstream: err.upstream ?? null,
+          detail: err.detail ?? err.message ?? null,
+        });
+      });
     return;
   }
 

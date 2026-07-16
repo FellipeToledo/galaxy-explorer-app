@@ -28,7 +28,7 @@ interface Dot {
   standalone: true,
   imports: [DecimalPipe, TranslatePipe],
   templateUrl: './neo-scatter.html',
-  styleUrl: './charts.scss',
+  styleUrl: '../../../shared/charts/charts.scss',
 })
 export class NeoScatterComponent {
   protected readonly translate = inject(TranslateService);

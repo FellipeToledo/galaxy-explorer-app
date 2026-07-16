@@ -1,0 +1,99 @@
+<section class="exo container">
+  <div class="head">
+    <p class="eyebrow">{{ 'exo.eyebrow' | t }}</p>
+    <h1 class="title">
+      {{ 'exo.title1' | t }} <span class="gradient-text">{{ 'exo.title2' | t }}</span>
+    </h1>
+    <p class="subtitle">{{ 'exo.subtitle' | t }}</p>
+  </div>
+
+  @if (loading()) {
+    <div class="state glass">
+      <div class="spinner"></div>
+      <p>{{ 'exo.loading' | t }}</p>
+    </div>
+  } @else if (error(); as err) {
+    <div class="state glass error">
+      <p>⚠️ {{ err | t }}</p>
+      <button class="btn btn-primary" (click)="retry()">{{ 'common.retry' | t }}</button>
+    </div>
+  } @else {
+    <div class="tiles">
+      <div class="tile hero glass">
+        <span class="tile-label">{{ 'exo.stat.total' | t }}</span>
+        <span class="hero-value">{{ total() | number: '1.0-0' }}</span>
+        <span class="tile-note">{{ 'exo.stat.totalNote' | t }}</span>
+      </div>
+
+      <div class="tile glass">
+        <span class="tile-label">{{ 'exo.stat.thisYear' | t }}</span>
+        <span class="tile-value">{{ thisYear() }}</span>
+        <span class="tile-note">{{ 'exo.stat.thisYearNote' | t }}</span>
+      </div>
+
+      @if (closest(); as p) {
+        <div class="tile glass">
+          <span class="tile-label">{{ 'exo.stat.closest' | t }}</span>
+          <span class="tile-value">
+            {{ lightYears(p.sy_dist) | number: '1.1-1' }} <small>{{ 'exo.unit.ly' | t }}</small>
+          </span>
+          <span class="tile-note">{{ p.pl_name }}</span>
+        </div>
+      }
+
+      @if (topMethod(); as m) {
+        <div class="tile glass">
+          <span class="tile-label">{{ 'exo.stat.method' | t }}</span>
+          <span class="tile-value">{{ m.pct | number: '1.0-0' }}<small>%</small></span>
+          <span class="tile-note">{{ m.name }}</span>
+        </div>
+      }
+    </div>
+
+    <div class="charts">
+      <app-exo-years class="glass" [data]="years()" />
+      <app-exo-mass-radius class="glass" [data]="massRadius()" />
+    </div>
+
+    <!-- Tabela: leitura acessível dos gráficos (a dispersão tem ~900 pontos) -->
+    <div class="table-card glass">
+      <h2 class="table-title">{{ 'exo.table.title' | t }}</h2>
+      <div class="table-scroll">
+        <table>
+          <caption class="sr-only">{{ 'exo.table.caption' | t }}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{{ 'exo.table.name' | t }}</th>
+              <th scope="col">{{ 'exo.table.star' | t }}</th>
+              <th scope="col" class="num">{{ 'exo.table.distance' | t }}</th>
+              <th scope="col" class="num">{{ 'exo.table.radius' | t }}</th>
+              <th scope="col" class="num">{{ 'exo.table.mass' | t }}</th>
+              <th scope="col" class="num">{{ 'exo.table.period' | t }}</th>
+              <th scope="col">{{ 'exo.table.method' | t }}</th>
+              <th scope="col" class="num">{{ 'exo.table.year' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of nearest(); track p.pl_name) {
+              <tr>
+                <th scope="row">{{ p.pl_name }}</th>
+                <td>{{ p.hostname }}</td>
+                <td class="num">
+                  {{ lightYears(p.sy_dist) | number: '1.1-1' }} {{ 'exo.unit.ly' | t }}
+                </td>
+                <!-- "—" quando o arquivo não tem o valor: nem todo planeta foi
+                     medido, e inventar 0 seria mentira -->
+                <td class="num">{{ p.pl_rade ? (p.pl_rade | number: '1.1-2') : '—' }}</td>
+                <td class="num">{{ p.pl_bmasse ? (p.pl_bmasse | number: '1.1-2') : '—' }}</td>
+                <td class="num">{{ p.pl_orbper ? (p.pl_orbper | number: '1.0-1') : '—' }}</td>
+                <td>{{ p.discoverymethod }}</td>
+                <td class="num">{{ p.disc_year }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="source">{{ 'exo.table.source' | t }}</p>
+    </div>
+  }
+</section>
