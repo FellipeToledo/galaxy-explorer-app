@@ -10,14 +10,25 @@
   <div class="controls">
     <div class="control">
       <span>{{ 'earth.date' | t }}</span>
-      <app-glass-select
-        [options]="dateOptions()"
+      <!-- Campo nativo (como o APOD): são 3.566 datas, um dropdown não serve.
+           min/max são os extremos reais do arquivo. -->
+      <input
+        type="date"
+        class="date-input"
         [value]="date()"
-        (valueChange)="onDateChange($event)"
-        minWidth="170px"
-        [ariaLabel]="'earth.dateAria' | t"
+        [min]="minDate"
+        [max]="maxDate()"
+        (change)="onDateChange($any($event.target).value)"
+        [attr.aria-label]="'earth.dateAria' | t"
       />
     </div>
+
+    @if (adjustedFrom(); as pedida) {
+      <!-- O arquivo tem buracos: dizer que a data mudou, e por quê -->
+      <p class="adjusted" role="status">
+        {{ 'earth.adjusted' | t: { date: (pedida | date: 'shortDate' : 'UTC' : translate.lang()) ?? pedida } }}
+      </p>
+    }
   </div>
 
   @if (loading()) {
@@ -97,6 +108,24 @@
         <div class="preload">
           <div class="bar"><span [style.width.%]="preloadPct()"></span></div>
           <span class="preload-text">{{ 'earth.preloading' | t: { pct: preloadPct() } }}</span>
+        </div>
+      }
+
+      <!-- Exportar a sequência: só onde o navegador sabe gravar -->
+      @if (canSaveVideo && frameCount() > 1) {
+        <div class="export">
+          <button
+            class="btn"
+            (click)="saveVideo()"
+            [disabled]="saving() || !ready()"
+            [title]="(ready() ? 'earth.saveVideoTitle' : 'earth.saveVideoWait') | t"
+          >
+            @if (saving()) {
+              {{ 'earth.saving' | t: { pct: saveProgress() } }}
+            } @else {
+              {{ 'earth.saveVideo' | t }}
+            }
+          </button>
         </div>
       }
 

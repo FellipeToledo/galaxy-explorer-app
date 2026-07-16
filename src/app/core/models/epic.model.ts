@@ -27,3 +27,10 @@ export interface EpicImage {
 
 /** Velocidades do slider temporal (ms por quadro). */
 export const EPIC_FRAME_MS = 420;
+
+/**
+ * Primeira data do arquivo do EPIC (medido em `/available`: 3.566 datas a
+ * partir de 2015-06-13). Serve de `min` no campo de data; o `max` é a data
+ * mais recente que a própria API reportar.
+ */
+export const EPIC_FIRST_DATE = '2015-06-13';
