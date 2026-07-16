@@ -57,18 +57,28 @@
   padding: 0.5rem 0.9rem;
   outline: none;
   cursor: pointer;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  /* O painel do calendário é desenhado pelo NAVEGADOR: CSS não o alcança.
+     `color-scheme: dark` é o que faz ele nascer escuro em vez de branco —
+     é assim que o APOD já fazia. Sem isso, o calendário destoa do tema. */
+  color-scheme: dark;
+}
+
+.date-input:hover {
+  border-color: rgba(34, 211, 238, 0.45);
 }
 
 .date-input:focus-visible {
   border-color: rgba(34, 211, 238, 0.6);
+  box-shadow: var(--glow-cyan);
 }
 
-/* O ícone do date picker é escuro por padrão e some no fundo do app */
+/* O ícone nativo é escuro e sumiria no fundo do app */
 .date-input::-webkit-calendar-picker-indicator {
   filter: invert(1);
-  opacity: 0.6;
+  opacity: 0.55;
   cursor: pointer;
+  transition: opacity 0.2s ease;
 }
 
 .date-input::-webkit-calendar-picker-indicator:hover {
