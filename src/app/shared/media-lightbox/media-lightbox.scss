@@ -41,6 +41,12 @@
   outline: none;
 }
 
+/* O player entra no ciclo do Tab (controls): precisa se anunciar. */
+.player:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+}
+
 .video-placeholder {
   display: grid;
   place-items: center;

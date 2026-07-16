@@ -1,5 +1,13 @@
-<div class="lightbox" (click)="close.emit()">
-  <button class="close" (click)="close.emit()" [attr.aria-label]="'media.close' | t">✕</button>
+<!-- role=dialog + aria-modal: leitores de tela anunciam como janela e ignoram
+     o conteúdo de trás; o título do item dá o nome acessível. -->
+<div
+  class="lightbox"
+  role="dialog"
+  aria-modal="true"
+  [attr.aria-label]="item().title"
+  (click)="close.emit()"
+>
+  <button #closeBtn class="close" (click)="close.emit()" [attr.aria-label]="'media.close' | t">✕</button>
 
   <figure (click)="$event.stopPropagation()">
     @if (isVideo()) {

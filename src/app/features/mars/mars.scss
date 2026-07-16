@@ -133,6 +133,13 @@
   border-color: rgba(34, 211, 238, 0.6);
 }
 
+/* O `outline: none` acima limpa o clique de mouse, mas engolia também o foco
+   por teclado (o seletor de elemento vence a regra global). Devolve aqui. */
+.search input:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
 .search input::placeholder {
   color: var(--text-dim);
 }

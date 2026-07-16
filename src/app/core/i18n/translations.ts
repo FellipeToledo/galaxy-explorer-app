@@ -174,6 +174,8 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'neo.chartBars.title': 'Asteroides por dia',
     'neo.chartBars.sub': 'Empilhados por classificação de risco',
     'neo.chartBars.aria': 'Colunas: asteroides por dia, separados por risco',
+    'neo.chartBars.dayAria':
+      '{{date}}: {{total}} asteroide(s), {{hazard}} potencialmente perigoso(s)',
     'neo.chartScatter.title': 'Distância × tamanho',
     'neo.chartScatter.sub': 'Diâmetro estimado em escala logarítmica',
     'neo.chartScatter.aria':
@@ -364,6 +366,8 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'neo.chartBars.title': 'Asteroids per day',
     'neo.chartBars.sub': 'Stacked by hazard classification',
     'neo.chartBars.aria': 'Columns: asteroids per day, split by hazard',
+    'neo.chartBars.dayAria':
+      '{{date}}: {{total}} asteroid(s), {{hazard}} potentially hazardous',
     'neo.chartScatter.title': 'Distance × size',
     'neo.chartScatter.sub': 'Estimated diameter on a logarithmic scale',
     'neo.chartScatter.aria': 'Scatter: approach distance by estimated diameter',

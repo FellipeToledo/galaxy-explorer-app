@@ -17,10 +17,17 @@
   --magenta: #e879f9;
   --amber: #fbbf24;
 
-  /* Texto */
+  /* Texto — contraste MEDIDO (WCAG 2.1) sobre a superfície mais clara do app
+     (--space-2 #0d0726), que é o pior caso:
+       --text        16.2:1  ✓ AA
+       --text-muted   7.3:1  ✓ AA
+       --text-dim     5.3:1  ✓ AA
+     O --text-dim era #6b6a8f = 3.80:1 e REPROVAVA (mínimo 4.5:1 para texto
+     normal) — e ele veste justamente o texto miúdo: datas dos cards, ticks dos
+     gráficos, hints, contadores. Se for clarear/escurecer, **meça de novo**. */
   --text: #e9e8ff;
   --text-muted: #9c9ac4;
-  --text-dim: #6b6a8f;
+  --text-dim: #8382a8;
 
   /* Vidro */
   --glass-bg: rgba(255, 255, 255, 0.04);
@@ -174,4 +181,15 @@ a {
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
+}
+
+/* ── Foco visível (padrão do app) ──────────────────────────
+   Só valia em 3 componentes; o resto herdava o outline do navegador, que muda
+   de forma por browser e some no fundo escuro. `:focus-visible` (e não
+   `:focus`) mantém o clique de mouse limpo. O ciano dá 10.8:1 sobre a
+   superfície — acima do 3:1 que a WCAG pede para indicador de foco. */
+:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 3px;
+  /* o outline acompanha o border-radius do elemento sozinho */
 }
