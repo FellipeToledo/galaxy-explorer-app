@@ -13,29 +13,35 @@ import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { NasaApiService } from '../../core/services/nasa-api.service';
 import {
-  Patent,
+  TECH_COLLECTIONS,
   TECH_SUGGESTIONS,
-  patentUrl,
+  TechCollection,
+  TechItem,
+  techUrl,
 } from '../../core/models/tech.model';
+import { NgTemplateOutlet } from '@angular/common';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { TranslateService } from '../../core/i18n/translate.service';
 import { ContentTranslatePipe } from '../../core/i18n/content-translate.pipe';
 import { InViewDirective } from '../../shared/in-view/in-view';
 
 /**
- * 🔬 Tecnologia — patentes da NASA disponíveis para licenciamento.
+ * 🔬 Tecnologia — o que a NASA licencia: patentes, software e spinoffs.
  *
- * Só patentes: `software` e `spinoff` existem na mesma API, mas **nenhum** dos
- * seus itens tem imagem (medido: 0/84 e 0/284, contra 175/175 das patentes) —
- * seriam cards cegos num app visual.
+ * As três coleções vivem na mesma API e diferem no que trazem (medido):
+ *  - **patent**: 175/175 com imagem e página pública → card COM foto, é link;
+ *  - **software**: 0 imagem, mas 100% com licença e 66% com link de repositório
+ *    → card compacto, o botão "ver no GitHub" quando há link;
+ *  - **spinoff**: só texto, e a página pública **não existe** (dá 404) → card
+ *    informativo, não-clicável.
  *
  * A API **exige** termo (sem ele o corpo volta vazio), por isso a seção abre
- * com uma busca pronta em vez de um estado vazio.
+ * com uma busca pronta.
  */
 @Component({
   selector: 'app-tech',
   standalone: true,
-  imports: [TranslatePipe, ContentTranslatePipe, InViewDirective],
+  imports: [NgTemplateOutlet, TranslatePipe, ContentTranslatePipe, InViewDirective],
   templateUrl: './tech.html',
   styleUrl: './tech.scss',
 })
@@ -45,7 +51,10 @@ export class TechComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly translate = inject(TranslateService);
 
-  protected readonly patents = signal<Patent[]>([]);
+  protected readonly collections = TECH_COLLECTIONS;
+  protected readonly collection = signal<TechCollection>('patent');
+
+  protected readonly items = signal<TechItem[]>([]);
   protected readonly loading = signal(true);
   protected readonly error = signal<string | null>(null);
   protected readonly term = signal('robot');
@@ -56,7 +65,6 @@ export class TechComponent implements OnInit {
   protected readonly suggestionIndex = signal(-1);
   private readonly typed = new Subject<string>();
 
-  /** Sugestões curadas (a API não tem autocomplete). */
   protected readonly filteredSuggestions = computed<string[]>(() => {
     const q = this.searchQuery().toLowerCase().trim();
     const list = q
@@ -65,15 +73,17 @@ export class TechComponent implements OnInit {
     return list.slice(0, 8);
   });
 
+  /** Só patentes têm imagem: define se o card mostra a área de foto. */
+  protected readonly hasImages = computed(() => this.collection() === 'patent');
+
   /** Centros distintos no resultado — dá a dimensão de "quem inventou". */
   protected readonly centers = computed(
-    () => new Set(this.patents().map((p) => p.center).filter(Boolean)).size,
+    () => new Set(this.items().map((p) => p.center).filter(Boolean)).size,
   );
 
-  protected readonly link = patentUrl;
+  protected readonly url = techUrl;
 
   ngOnInit(): void {
-    // Digitar troca a busca sozinho (a API é rápida e o resultado é pequeno).
     this.typed
       .pipe(
         debounceTime(400),
@@ -81,6 +91,14 @@ export class TechComponent implements OnInit {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((t) => this.search(t));
+    this.search(this.term());
+  }
+
+  protected selectCollection(c: TechCollection): void {
+    if (this.collection() === c) {
+      return;
+    }
+    this.collection.set(c);
     this.search(this.term());
   }
 
@@ -166,10 +184,14 @@ export class TechComponent implements OnInit {
     this.term.set(term);
     this.loading.set(true);
     this.error.set(null);
-    this.api.searchPatents(term).subscribe({
+    const collection = this.collection();
+    this.api.searchTech(collection, term).subscribe({
       next: (rows) => {
-        this.patents.set(rows);
-        this.loading.set(false);
+        // Descarta se o usuário trocou de coleção/termo antes de chegar.
+        if (this.collection() === collection && this.term() === term) {
+          this.items.set(rows);
+          this.loading.set(false);
+        }
       },
       error: () => {
         this.error.set('tech.error');

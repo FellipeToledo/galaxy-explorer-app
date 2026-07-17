@@ -18,7 +18,11 @@ import {
   kvSelfTest,
 } from './translate-core.mjs';
 import { datasetNames, getDataset, isDataset } from './exoplanets-core.mjs';
-import { normalizeTerm, searchPatents } from './techtransfer-core.mjs';
+import {
+  isCollection,
+  normalizeTerm,
+  searchTech,
+} from './techtransfer-core.mjs';
 
 const PORT = Number(process.env.PORT) || 3001;
 
@@ -70,13 +74,18 @@ const server = createServer((req, res) => {
   // Mesmo contrato da função serverless (api/techtransfer.mjs).
   if (req.method === 'GET' && url.pathname === '/api/techtransfer') {
     const term = normalizeTerm(url.searchParams.get('q'));
+    const type = url.searchParams.get('type') ?? 'patent';
+    if (!isCollection(type)) {
+      sendJson(res, 400, { error: 'colecao_invalida' });
+      return;
+    }
     if (!term) {
       sendJson(res, 400, { error: 'termo_obrigatorio' });
       return;
     }
-    searchPatents(term)
+    searchTech(type, term)
       .then(({ rows, cache }) =>
-        sendJson(res, 200, { q: term, count: rows.length, cache, rows }),
+        sendJson(res, 200, { type, q: term, count: rows.length, cache, rows }),
       )
       .catch((err) => {
         console.error('techtransfer error:', err.message);

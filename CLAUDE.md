@@ -81,7 +81,7 @@ src/app/
 │   ├── earth/              # EPIC: disco da Terra + slider temporal (play/pause)
 │   ├── exoplanets/         # 🪐 Exoplanet Archive: tiles + 2 gráficos + tabela
 │   │   └── charts/         # exo-years, exo-mass-radius (SVG próprio)
-│   └── tech/               # 🔬 TechTransfer: patentes (cards → site da NASA)
+│   └── tech/               # 🔬 TechTransfer: patentes/software/spinoffs (chips)
 ├── shared/
 │   ├── starfield/          # fundo de estrelas em <canvas> (fora da zona)
 │   ├── navbar/             # navegação + seletor de idioma
@@ -299,14 +299,22 @@ src/app/
   cache, 198 ms).
 - **TechTransfer (🔬 Tecnologia)**: a API **mudou de casa** —
   `api.nasa.gov/techtransfer` devolve **302** para uma *página de documentação
-  HTML*; o endpoint vivo é `technology.nasa.gov/api/query/patent/<termo>`. Ela
+  HTML*; o endpoint vivo é `technology.nasa.gov/api/query/<coleção>/<termo>`. Ela
   libera CORS **só para o próprio site**
   (`Access-Control-Allow-Origin: https://technology.nasa.gov`) → daí o
   `/api/techtransfer`. Regras medidas, não re-litigar:
-  - **só patentes**: `software` (0/84) e `spinoff` (0/284) **não têm imagem
-    nenhuma**, contra **175/175** das patentes — seriam cards cegos;
+  - **três coleções** (`type=patent|software|spinoff`, lista fechada — o cliente
+    não escolhe a URL), com o card adaptado ao que cada uma tem (medido):
+    **patent** 175/175 com imagem e **página pública** → card com foto, é `<a>`;
+    **software** 0 imagem mas **100% licença** + **66% link de repositório** →
+    card compacto (cabeçalho tipográfico + badge de licença), `<a>` p/ o repo
+    quando há link; **spinoff** só texto → card `<div>` **não-clicável**.
+  - **a página pública só existe para patente**: `/patent/<caso>` dá **404**
+    para software/spinoff (verificado) — por isso esses cards não linkam para a
+    NASA; o software linka para o **GitHub**, o spinoff não linka.
   - a API devolve **arrays de 13 posições**, não objetos: o mapa `F` no core é
-    a única fonte da verdade (se a NASA reordenar, o teste quebra antes da UI);
+    a única fonte da verdade (se a NASA reordenar, o teste quebra antes da UI).
+    `license` (campo 6) e `link` (campo 8) só vêm no software.
   - ela **embute `<span class="highlight">`** no título/descrição — renderizar
     como texto mostraria a tag, como HTML seria injeção → `stripHtml()`;
   - **termo é obrigatório**: sem ele a API devolve **corpo vazio** (não `[]`),
@@ -328,11 +336,13 @@ src/app/
 ## Backlog / TODOs (levantados na conversa)
 
 Melhorias no que já existe:
-- [ ] **Software e spinoffs no TechTransfer** — existem na mesma API
-      (`/query/software/<termo>` e `/query/spinoff/<termo>`, medidos: 84 e 284
-      itens) mas **nenhum tem imagem**; o software traz link do GitHub (56/84).
-      Precisaria de um card sem imagem que não fique pobre — decidir o desenho
-      antes de implementar.
+- [ ] **Passada de qualidade** — revisar o que ficou disperso em 7 seções:
+      estados de erro, duplicação de CSS entre features, cobertura de spec no
+      front (hoje só 3 arquivos), e o CLAUDE.md ficando longo.
+- [ ] **a11y do media-card (Marte/Mídia)** — o `alt` repete o título que já está
+      no texto do botão → leitor de tela fala duas vezes. Mesmo ajuste feito no
+      card de patentes (`alt=""` + aria-label no elemento), mas mexe em duas
+      seções já validadas.
 - [ ] **Nomes de asteroide no `ct`?** — hoje `name` e datas do NeoWs não passam
       pela tradução de conteúdo (são designações, não prosa). Reavaliar só se
       aparecer texto livre na seção.
@@ -353,7 +363,7 @@ da NASA com busca e cards que levam ao site oficial), **🪐 Exoplanetas** (Exop
 tiles, descobertas por ano, massa×raio com referências do Sistema Solar e
 tabela dos 200 mais próximos), **acessibilidade** (contraste AA medido, foco visível
 global, lightbox com dialog/Esc/focus-trap, gráficos que se anunciam),
-**testes + CI** (100 testes: 43 no `server/` via `node --test`, 57 no front via
+**testes + CI** (107 testes: 50 no `server/` via `node --test`, 57 no front via
 Karma; GitHub Action com testes + build por PR),
 i18n UI (pt-BR/en), tradução de conteúdo (DeepL +
 fallback navegador/original), scroll infinito, filtros fiéis (ano+ordenação),
