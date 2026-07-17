@@ -38,6 +38,39 @@
   z-index: 30; /* autocomplete acima do grid */
 }
 
+/* Chips de coleção (patentes / software / spinoffs) */
+.collections {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.collections .chip {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.collections .chip:hover {
+  color: var(--text);
+  border-color: rgba(34, 211, 238, 0.5);
+}
+
+.collections .chip.active {
+  color: var(--text);
+  background: linear-gradient(120deg, #0e7490, #164e63);
+  border-color: transparent;
+  box-shadow: 0 0 18px rgba(14, 116, 144, 0.45);
+}
+
 .search-wrap {
   position: relative;
   max-width: 640px;
@@ -171,9 +204,92 @@
   color: inherit;
 }
 
+/* No rodapé da patente o .card-date carrega a CATEGORIA (não uma data curta):
+   ela pode quebrar em 2 linhas e desalinhar as alturas. Trava em 1 linha. */
+.card-date {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 60%;
+}
+
 /* Imagem que deu 403: o gradiente do --img-bg fica no lugar, sem ícone quebrado */
 .card-img.no-img .card-photo {
   display: none;
+}
+
+/* Card não-clicável (spinoff / software sem link): a página pública não existe */
+.card.is-static {
+  cursor: default;
+}
+
+.card.is-static:hover {
+  transform: none; /* nada de lift num card que não leva a lugar nenhum */
+}
+
+/* ── Cabeçalho tipográfico (substitui a foto no software/spinoff) ──────────
+   Ocupa o lugar da imagem com informação densa em vez de um vazio: centro +
+   licença no topo, categoria em destaque. */
+.card-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1rem 1.1rem;
+  background: var(--img-bg);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.card-head-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 1.5em; /* badge de licença longo não pode empurrar a altura */
+}
+
+.card-badge-static {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  color: #05010f;
+  background: var(--c1);
+}
+
+/* Badge de licença: a "identidade visual" que a foto daria. A cor separa
+   Open Source (verde) do resto — sem virar semáforo (é categórico, não status). */
+.lic-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 62%; /* licença longa não expulsa o badge do centro p/ outra linha */
+}
+
+.lic-badge[data-lic='Open Source'] {
+  color: #4ade80;
+  border-color: rgba(74, 222, 128, 0.4);
+  background: rgba(74, 222, 128, 0.1);
+}
+
+.card-cat {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #fff;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.6em; /* reserva 2 linhas → cabeçalhos uniformes */
 }
 
 .end-note {

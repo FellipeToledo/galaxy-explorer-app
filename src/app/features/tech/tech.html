@@ -8,6 +8,21 @@
   </div>
 
   <div class="filters glass">
+    <!-- Coleções: uma seção, três acervos da mesma API -->
+    <div class="collections" role="tablist" [attr.aria-label]="'tech.collectionAria' | t">
+      @for (c of collections; track c) {
+        <button
+          class="chip"
+          role="tab"
+          [class.active]="collection() === c"
+          [attr.aria-selected]="collection() === c"
+          (click)="selectCollection(c)"
+        >
+          {{ 'tech.collection.' + c | t }}
+        </button>
+      }
+    </div>
+
     <div class="search-wrap">
       <form class="search" (submit)="$event.preventDefault(); submit()">
         <input
@@ -58,65 +73,109 @@
       <p>⚠️ {{ err | t }}</p>
       <button class="btn btn-primary" (click)="retry()">{{ 'common.retry' | t }}</button>
     </div>
-  } @else if (patents().length === 0) {
+  } @else if (items().length === 0) {
     <div class="state glass">
       <p>🔬 {{ 'tech.empty' | t: { term: term() } }}</p>
       <p class="hint">{{ 'tech.emptyHint' | t }}</p>
     </div>
   } @else {
     <p class="count">
-      {{ 'tech.count' | t: { count: patents().length, centers: centers() } }}
+      {{ 'tech.count.' + collection() | t: { count: items().length, centers: centers() } }}
     </p>
 
-    <div class="grid">
-      @for (p of patents(); track p.id; let i = $index) {
-        <!-- <a>, não <button>: cada card leva à página da patente na NASA -->
-        <!-- aria-label explícito: sem ele o nome do link seria a colagem de
-             alt + centro + código + título + descrição + categoria -->
-        <a
-          class="card"
-          appInView
-          [attr.data-theme]="i % 4"
-          [href]="link(p.caseNumber)"
-          target="_blank"
-          rel="noopener"
-          [attr.aria-label]="'tech.cardAria' | t: { title: p.title, center: p.center }"
-        >
-          <span class="card-body">
-            <span class="card-inner">
-              <span class="card-img">
-                <span class="card-img-glow"></span>
-                @if (p.imageUrl) {
-                  <!-- alt="": decorativa. O título já está no card (e no
-                       aria-label do link); repeti-lo aqui só faria o leitor de
-                       tela dizer a mesma coisa duas vezes.
-                       Algumas imagens dão 403 isolado → some em vez de quebrar. -->
-                  <img
-                    class="card-photo"
-                    [src]="p.imageUrl"
-                    alt=""
-                    loading="lazy"
-                    (error)="onImageError($event)"
-                  />
-                }
-                <span class="card-badge">{{ p.center || 'NASA' }}</span>
-              </span>
-              <span class="card-info">
-                <span class="card-brand">{{ p.caseNumber }}</span>
-                <span class="card-name">{{ p.title | ct }}</span>
-                <!-- ct: 160 → o card corta em 2 linhas (regra da quota) -->
-                <span class="card-desc">{{ p.description | ct: 160 }}</span>
-                <span class="card-meta">
-                  <span class="card-date">{{ p.category | ct: 60 }}</span>
-                  <span class="card-cta">{{ 'tech.view' | t }}</span>
-                </span>
-              </span>
-            </span>
-          </span>
-        </a>
+    <div class="grid" [class.no-images]="!hasImages()">
+      @for (p of items(); track p.id; let i = $index) {
+        <!-- O elemento do card muda com o que existe:
+             patent → <a> para a página; software com link → <a> p/ GitHub;
+             spinoff / software sem link → <div> não-clicável (a página não
+             existe: /patent/<caso> dá 404 para essas coleções). -->
+        @if (collection() === 'patent') {
+          <a
+            class="card"
+            appInView
+            [attr.data-theme]="i % 4"
+            [href]="url(p.caseNumber)"
+            target="_blank"
+            rel="noopener"
+            [attr.aria-label]="'tech.cardAria' | t: { title: p.title, center: p.center }"
+          >
+            <ng-container [ngTemplateOutlet]="cardBody" [ngTemplateOutletContext]="{ p, i }" />
+          </a>
+        } @else if (p.link) {
+          <a
+            class="card"
+            appInView
+            [attr.data-theme]="i % 4"
+            [href]="p.link"
+            target="_blank"
+            rel="noopener"
+            [attr.aria-label]="'tech.cardAriaLink' | t: { title: p.title, center: p.center }"
+          >
+            <ng-container [ngTemplateOutlet]="cardBody" [ngTemplateOutletContext]="{ p, i }" />
+          </a>
+        } @else {
+          <div class="card is-static" appInView [attr.data-theme]="i % 4">
+            <ng-container [ngTemplateOutlet]="cardBody" [ngTemplateOutletContext]="{ p, i }" />
+          </div>
+        }
       }
     </div>
 
     <p class="end-note">{{ 'tech.end' | t }}</p>
   }
 </section>
+
+<!-- Corpo do card, compartilhado pelas três variações acima -->
+<ng-template #cardBody let-p="p" let-i="i">
+  <span class="card-body">
+    <span class="card-inner">
+      @if (hasImages()) {
+        <span class="card-img">
+          <span class="card-img-glow"></span>
+          @if (p.imageUrl) {
+            <img
+              class="card-photo"
+              [src]="p.imageUrl"
+              alt=""
+              loading="lazy"
+              (error)="onImageError($event)"
+            />
+          }
+          <span class="card-badge">{{ p.center || 'NASA' }}</span>
+        </span>
+      } @else {
+        <!-- Sem foto: um cabeçalho tipográfico ocupa o lugar, denso, não vazio -->
+        <span class="card-head">
+          <span class="card-head-top">
+            <span class="card-badge-static">{{ p.center || 'NASA' }}</span>
+            @if (p.license) {
+              <span class="lic-badge" [attr.data-lic]="p.license">{{ p.license }}</span>
+            }
+          </span>
+          <span class="card-cat">{{ p.category | ct: 60 }}</span>
+        </span>
+      }
+
+      <span class="card-info">
+        <span class="card-brand">{{ p.caseNumber }}</span>
+        <span class="card-name">{{ p.title | ct }}</span>
+        <!-- ct: 160 → o card corta em 2 linhas (regra da quota) -->
+        <span class="card-desc">{{ p.description | ct: 160 }}</span>
+        <span class="card-meta">
+          @if (hasImages()) {
+            <span class="card-date">{{ p.category | ct: 60 }}</span>
+          }
+          <span class="card-cta">
+            @if (collection() === 'patent') {
+              {{ 'tech.view.patent' | t }}
+            } @else if (p.link) {
+              {{ 'tech.view.link' | t }}
+            } @else {
+              {{ p.center || 'NASA' }}
+            }
+          </span>
+        </span>
+      </span>
+    </span>
+  </span>
+</ng-template>
